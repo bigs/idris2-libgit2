@@ -1,0 +1,15 @@
+package libgit
+
+brief = "libgit bindings for Idris 2"
+version = "0.1"
+readme = "README.md"
+license = "GPLv2"
+
+sourcedir = "src"
+
+modules = Libgit
+        , Libgit.Clone
+
+prebuild = "make -C libgit_idris_wrapper"
+postinstall = "make -C libgit_idris_wrapper install"
+postclean = "make -C libgit_idris_wrapper clean"
