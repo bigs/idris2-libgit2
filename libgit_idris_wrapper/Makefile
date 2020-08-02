@@ -16,7 +16,7 @@ DEPS = $(OBJS:.o=.d)
 all: $(TARGET)$(SHLIB_SUFFIX)
 
 $(TARGET)$(SHLIB_SUFFIX): $(OBJS)
-	$(CC) -shared $(LDFLAGS) -o $@ $^
+	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
 
 -include $(DEPS)
