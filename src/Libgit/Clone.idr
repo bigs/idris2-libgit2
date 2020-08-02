@@ -37,9 +37,9 @@ libgit fn = "C:" ++ fn ++ ",libgit2"
 libgitWrapper : String -> String
 libgitWrapper fn = "C:" ++ fn ++ ",libgit_idris_wrapper"
 
-%foreign (libgitWrapper "log_some_shit")
-log_some_shit : String -> PrimIO ()
+%foreign (libgitWrapper "log_something")
+log_something : String -> PrimIO ()
 
 export
-logSomeShit : String -> IO ()
-logSomeShit = primIO . log_some_shit
+logSomething : String -> IO ()
+logSomething = primIO . log_something
