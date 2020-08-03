@@ -1,6 +1,9 @@
 module Libgit.Clone
 
+import Prelude
 import System.FFI
+
+import Libgit.FFI
 
 -- GitCloneOptions : Type
 -- GitCloneOptions = Struct "git_clone_options" [
@@ -22,24 +25,34 @@ GitCloneOptions = Struct "git_clone_options" []
 GitRepository : Type
 GitRepository = Struct "git_repository" []
 
-libgit : String -> String
-libgit fn = "C:" ++ fn ++ ",libgit2"
+%foreign (libgitWrapper "mk_clone_options")
+init_clone_options : PrimIO (Ptr GitCloneOptions)
 
--- %foreign (libgit "git_clone")
--- prim_clone : (Ptr (Ptr GitRepository)) -> String -> String -> Ptr GitCloneOptions -> PrimIO Int
---
--- clone : String -> String -> PrimIO (Ptr GitRepository)
--- clone url localPath = do
---   let repo : Ptr (Ptr GitRepository) = 0
---   res <- prim_clone repo url localPath
---   pure repo
+%foreign (libgit "GIT_CLONE_OPTIONS_VERSION")
+GIT_CLONE_OPTIONS_VERSION : Int
 
-libgitWrapper : String -> String
-libgitWrapper fn = "C:" ++ fn ++ ",libgit_idris_wrapper"
+%foreign (libgit "git_clone_init_options")
+git_clone_init_options : Ptr GitCloneOptions -> Int -> PrimIO Int
 
-%foreign (libgitWrapper "log_something")
-log_something : String -> PrimIO ()
+initGitCloneOptions : GitContext -> IO (Maybe (Ptr GitCloneOptions))
+initGitCloneOptions _ = do
+  cloneOptions <- primIO init_clone_options
+  res <- primIO $ git_clone_init_options cloneOptions GIT_CLONE_OPTIONS_VERSION
+  case res of
+    0 => pure $ Just cloneOptions
+    _ => pure $ Nothing
+
+%foreign (libgitWrapper "mk_git_repository")
+mk_null_git_repository : Ptr (Ptr GitRepository)
+
+%foreign (libgit "git_clone")
+prim_clone : (Ptr (Ptr GitRepository)) -> String -> String -> Ptr GitCloneOptions -> PrimIO Int
 
 export
-logSomething : String -> IO ()
-logSomething = primIO . log_something
+clone : GitContext -> String -> String -> IO (Ptr (Ptr GitRepository))
+clone _ url localPath = do
+  let repo = mk_null_git_repository
+  options <- primIO $ init_clone_options
+  res <- primIO $ prim_clone repo url localPath options
+  putStrLn $ "Result was: " ++ show res
+  pure repo

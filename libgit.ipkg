@@ -9,6 +9,7 @@ sourcedir = "src"
 
 modules = Libgit
         , Libgit.Clone
+        , Libgit.FFI
 
 prebuild = "make -C libgit_idris_wrapper"
 postinstall = "make -C libgit_idris_wrapper install"
