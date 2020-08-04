@@ -38,9 +38,11 @@ implementation Traversable (Either l) where
   traverse _ (Left x) = pure $ Left x
   traverse f (Right x) = Right <$> f x
 
+public export
 GitT : (m: Type -> Type) -> (ty: Type) -> Type
 GitT = StateT GitContext
 
+export
 runGitT : HasIO m => GitT m a -> m (Either Int a)
 runGitT action = do
   eCtx <- liftIO initGitContext

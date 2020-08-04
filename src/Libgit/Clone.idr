@@ -1,6 +1,8 @@
 module Libgit.Clone
 
 import Prelude
+import Control.Monad.State
+import Control.Monad.Trans
 import System.FFI
 
 import Libgit.FFI
@@ -49,10 +51,11 @@ mk_null_git_repository : Ptr (Ptr GitRepository)
 prim_clone : (Ptr (Ptr GitRepository)) -> String -> String -> Ptr GitCloneOptions -> PrimIO Int
 
 export
-clone : GitContext -> String -> String -> IO (Ptr (Ptr GitRepository))
-clone _ url localPath = do
+clone : HasIO m => String -> String -> GitT m (Either Int (Ptr (Ptr GitRepository)))
+clone url localPath = do
   let repo = mk_null_git_repository
-  options <- primIO $ init_clone_options
-  res <- primIO $ prim_clone repo url localPath options
-  putStrLn $ "Result was: " ++ show res
-  pure repo
+  options <- lift . primIO $ init_clone_options
+  res <- lift . primIO $ prim_clone repo url localPath options
+  if res < 0
+    then pure $ Left res
+    else pure $ Right repo
