@@ -1,7 +1,7 @@
 module Libgit.FFI
 
 import Prelude
-import Control.Monad.State
+import Control.Monad.Reader
 
 public export
 libgit : String -> String
@@ -30,23 +30,25 @@ initGitContext = do
 shutdownGitContext : GitContext -> IO Int
 shutdownGitContext _ = primIO libgit_shutdown
 
+public export
 implementation Foldable (Either l) where
   foldr f m (Left l) = m
   foldr f m (Right x) = f x m
 
+public export
 implementation Traversable (Either l) where
   traverse _ (Left x) = pure $ Left x
   traverse f (Right x) = Right <$> f x
 
 public export
 GitT : (m: Type -> Type) -> (ty: Type) -> Type
-GitT = StateT GitContext
+GitT = ReaderT GitContext
 
 export
 runGitT : HasIO m => GitT m a -> m (Either Int a)
 runGitT action = do
   eCtx <- liftIO initGitContext
   for eCtx $ \ctx => do
-    (res, ctx') <- runStateT action ctx
-    _ <- liftIO . shutdownGitContext $ ctx'
+    res <- runReaderT action ctx
+    _ <- liftIO $ shutdownGitContext ctx
     pure res
