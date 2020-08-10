@@ -1,7 +1,23 @@
 module Libgit.FFI
 
 import Prelude
-import Control.Monad.Reader
+import System.FFI
+
+-- Structs
+
+public export
+AbstractStruct : String -> Type
+AbstractStruct name = Struct name []
+
+export
+CGitCloneOptions : Type
+CGitCloneOptions = AbstractStruct "git_clone_options"
+
+export
+CGitRepository : Type
+CGitRepository = AbstractStruct "git_repository"
+
+-- FFI string builders
 
 public export
 libgit : String -> String
@@ -11,44 +27,36 @@ public export
 libgitWrapper : String -> String
 libgitWrapper fn = "C:" ++ fn ++ ",libgit_idris_wrapper"
 
+-- FFI functions
+
+export
 %foreign (libgit "git_libgit2_init")
 libgit_init : PrimIO Int
 
+export
 %foreign (libgit "git_libgit2_shutdown")
 libgit_shutdown : PrimIO Int
 
 export
-data GitContext = MkGitContext
-
-initGitContext : IO (Either Int GitContext)
-initGitContext = do
-  res <- primIO $ libgit_init
-  if res >= 0
-    then pure $ Right MkGitContext
-    else pure $ Left res
-
-shutdownGitContext : GitContext -> IO Int
-shutdownGitContext _ = primIO libgit_shutdown
-
-public export
-implementation Foldable (Either l) where
-  foldr f m (Left l) = m
-  foldr f m (Right x) = f x m
-
-public export
-implementation Traversable (Either l) where
-  traverse _ (Left x) = pure $ Left x
-  traverse f (Right x) = Right <$> f x
-
-public export
-GitT : (m: Type -> Type) -> (ty: Type) -> Type
-GitT = ReaderT GitContext
+%foreign (libgitWrapper "mk_clone_options")
+init_clone_options : PrimIO (Ptr CGitCloneOptions)
 
 export
-runGitT : HasIO m => GitT m a -> m (Either Int a)
-runGitT action = do
-  eCtx <- liftIO initGitContext
-  for eCtx $ \ctx => do
-    res <- runReaderT action ctx
-    _ <- liftIO $ shutdownGitContext ctx
-    pure res
+%foreign (libgit "GIT_CLONE_OPTIONS_VERSION")
+GIT_CLONE_OPTIONS_VERSION : Int
+
+export
+%foreign (libgit "git_clone_init_options")
+git_clone_init_options : Ptr CGitCloneOptions -> Int -> PrimIO Int
+
+export
+%foreign (libgitWrapper "mk_git_repository")
+mk_null_git_repository : PrimIO (Ptr (Ptr CGitRepository))
+
+export
+%foreign (libgit "git_clone")
+prim_clone : (Ptr (Ptr CGitRepository)) -> String -> String -> Ptr CGitCloneOptions -> PrimIO Int
+
+export
+%foreign (libgitWrapper "get_git_repository")
+prim_get_git_repository : (Ptr (Ptr CGitRepository)) -> PrimIO (Ptr CGitRepository)
