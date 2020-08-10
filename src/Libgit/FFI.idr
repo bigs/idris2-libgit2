@@ -38,19 +38,19 @@ export
 libgit_shutdown : PrimIO Int
 
 export
-%foreign (libgitWrapper "mk_clone_options")
+%foreign (libgitWrapper "make_clone_options")
 init_clone_options : PrimIO (Ptr CGitCloneOptions)
 
 export
-%foreign (libgit "GIT_CLONE_OPTIONS_VERSION")
-GIT_CLONE_OPTIONS_VERSION : Int
+%foreign (libgitWrapper "git_clone_options_version")
+git_clone_options_version : Int
 
 export
 %foreign (libgit "git_clone_init_options")
 git_clone_init_options : Ptr CGitCloneOptions -> Int -> PrimIO Int
 
 export
-%foreign (libgitWrapper "mk_git_repository")
+%foreign (libgitWrapper "make_git_repository")
 mk_null_git_repository : PrimIO (Ptr (Ptr CGitRepository))
 
 export

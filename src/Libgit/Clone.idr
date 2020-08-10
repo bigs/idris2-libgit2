@@ -31,7 +31,7 @@ liftPrimIO action = liftIO . primIO $ action
 initGitCloneOptions : HasIO m => GitT m (Either Int (Ptr CGitCloneOptions))
 initGitCloneOptions = do
   cloneOptions <- liftPrimIO $ init_clone_options
-  res <- liftPrimIO $ git_clone_init_options cloneOptions 1
+  res <- liftPrimIO $ git_clone_init_options cloneOptions git_clone_options_version
   case res of
     0 => pure $ Right cloneOptions
     _ => pure $ Left res
