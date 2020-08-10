@@ -17,6 +17,20 @@ export
 CGitRepository : Type
 CGitRepository = AbstractStruct "git_repository"
 
+-- GitCloneOptions : Type
+-- GitCloneOptions = Struct "git_clone_options" [
+--   ("version", Int),
+--   ("checkout_opts", Int), -- git_checkout_options
+--   ("fetch_opts", Int), -- git_fetch_options
+--   ("bare", Int),
+--   ("local", Int), -- git_clone_local_t
+--   ("checkout_branch", String),
+--   ("repository_cb", Int), -- git_repository_create_cb
+--   ("repository_cb_payload", Int), -- void * arbitrary payload
+--   ("remote_cb", Int), -- git_remote_create_cb
+--   ("remote_cb_payload", Int) -- void * arbitrary payload
+-- ]
+
 -- FFI string builders
 
 public export
