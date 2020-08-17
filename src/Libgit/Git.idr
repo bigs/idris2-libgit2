@@ -1,9 +1,12 @@
 module Libgit.Git
 
-import Libgit.FFI
-
 import Control.Monad.Reader
 
+import Libgit.FFI
+
+||| An abstract token representing the initialized libgit2 state. Its
+||| constructor is purposefully not exported, a context can only be created
+||| via `runGitT`.
 export
 data GitContext = MkGitContext
 
@@ -31,6 +34,7 @@ public export
 GitT : (m: Type -> Type) -> (ty: Type) -> Type
 GitT m a = ReaderT GitContext m a
 
+||| Runs Git actions within an initialized `GitContext`
 export
 runGitT : HasIO m => GitT m a -> m (Either Int a)
 runGitT action = do
