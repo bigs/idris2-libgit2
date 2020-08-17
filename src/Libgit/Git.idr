@@ -29,7 +29,7 @@ implementation Traversable (Either l) where
 
 public export
 GitT : (m: Type -> Type) -> (ty: Type) -> Type
-GitT = ReaderT GitContext
+GitT m a = ReaderT GitContext m a
 
 export
 runGitT : HasIO m => GitT m a -> m (Either Int a)

@@ -22,7 +22,7 @@ initGitCloneOptions = do
     _ => pure $ Left res
 
 export
-clone : (HasIO m, Applicative m) => String -> String -> GitT m (Either Int GitRepository)
+clone : HasIO m => String -> String -> GitT m (Either Int GitRepository)
 clone url localPath = do
   repo <- liftPrimIO mk_null_git_repository
   eOptions <- initGitCloneOptions
