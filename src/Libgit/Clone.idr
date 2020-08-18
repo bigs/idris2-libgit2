@@ -2,6 +2,7 @@ module Libgit.Clone
 
 import Prelude
 import Control.Monad.Reader
+import Control.Monad.State
 import Control.Monad.Trans
 
 import Libgit.FFI
@@ -11,9 +12,9 @@ export
 data GitRepository = MkGitRepository (Ptr CGitRepository)
 
 liftPrimIO : (HasIO m) => PrimIO a -> m a
-liftPrimIO action = liftIO . primIO $ action
+liftPrimIO action = liftIO $ primIO action
 
-initGitCloneOptions : HasIO m => GitT m (Either Int (Ptr CGitCloneOptions))
+initGitCloneOptions : HasIO m => GitT i m (Either Int (Ptr CGitCloneOptions))
 initGitCloneOptions = do
   cloneOptions <- liftPrimIO $ init_clone_options
   res <- liftPrimIO $ git_clone_init_options cloneOptions git_clone_options_version
@@ -22,10 +23,10 @@ initGitCloneOptions = do
     _ => pure $ Left res
 
 export
-clone : HasIO m => String -> String -> GitT m (Either Int GitRepository)
+clone : HasIO m => String -> String -> (forall i. GitT i m (Either Int GitRepository))
 clone url localPath = do
   repo <- liftPrimIO mk_null_git_repository
-  eOptions <- initGitCloneOptions
+  eOptions <- initGitCloneOptions {i}
   map join $ for eOptions $ \options => do
     res <- liftPrimIO $ prim_clone repo url localPath options
     ptr <- liftPrimIO $ prim_get_git_repository repo
@@ -36,9 +37,7 @@ clone url localPath = do
 export
 testClone : String -> String -> IO ()
 testClone url localPath = do
-  eRes <- runGitT $ do
-   eRepo <- clone url localPath
-   case eRepo of
-     Left res => putStrLn $ "Got: " ++ show res
-     Right _ => putStrLn "cloned it"
-  putStrLn "Done."
+  eRes <- runGitT $ clone url localPath
+  case eRes of
+    Left res => putStrLn $ "Error: " ++ show res
+    Right _ => putStrLn "Cloned repository"
