@@ -45,15 +45,15 @@ libgitWrapper fn = "C:" ++ fn ++ ",libgit_idris_wrapper"
 
 export
 %foreign (libgit "git_libgit2_init")
-libgit_init : PrimIO Int
+prim_libgit_init : PrimIO Int
 
 export
 %foreign (libgit "git_libgit2_shutdown")
-libgit_shutdown : PrimIO Int
+prim_libgit_shutdown : PrimIO Int
 
 export
 %foreign (libgitWrapper "make_clone_options")
-init_clone_options : PrimIO (Ptr CGitCloneOptions)
+prim_init_clone_options : PrimIO (Ptr CGitCloneOptions)
 
 export
 %foreign (libgitWrapper "git_clone_options_version")
@@ -61,11 +61,11 @@ git_clone_options_version : Int
 
 export
 %foreign (libgit "git_clone_init_options")
-git_clone_init_options : Ptr CGitCloneOptions -> Int -> PrimIO Int
+prim_git_clone_init_options : Ptr CGitCloneOptions -> Int -> PrimIO Int
 
 export
 %foreign (libgitWrapper "make_git_repository")
-mk_null_git_repository : PrimIO (Ptr (Ptr CGitRepository))
+prim_mk_null_git_repository : PrimIO (Ptr (Ptr CGitRepository))
 
 export
 %foreign (libgit "git_clone")
@@ -74,3 +74,7 @@ prim_clone : (Ptr (Ptr CGitRepository)) -> String -> String -> Ptr CGitCloneOpti
 export
 %foreign (libgitWrapper "get_git_repository")
 prim_get_git_repository : (Ptr (Ptr CGitRepository)) -> PrimIO (Ptr CGitRepository)
+
+export
+liftPIO : (HasIO m) => PrimIO a -> m a
+liftPIO action = liftIO $ primIO action

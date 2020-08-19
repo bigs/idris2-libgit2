@@ -15,13 +15,13 @@ data GitContext : (i : Type) -> Type where
 
 initGitContext : forall i. IO (Either Int (GitContext i))
 initGitContext = do
-  res <- primIO $ libgit_init
+  res <- primIO $ prim_libgit_init
   if res >= 0
     then pure $ Right $ MkGitContext
     else pure $ Left res
 
 shutdownGitContext : GitContext i -> IO Int
-shutdownGitContext _ = primIO libgit_shutdown
+shutdownGitContext _ = primIO prim_libgit_shutdown
 
 public export
 implementation Foldable (Either l) where
