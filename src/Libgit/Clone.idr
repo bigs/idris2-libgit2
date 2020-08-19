@@ -9,11 +9,9 @@ import Libgit.FFI
 import Libgit.Git
 
 export
-data GitRepository = MkGitRepository (Ptr CGitRepository)
+data GitRepository = MkGitRepository CGitRepository
 
-
-
-initGitCloneOptions : HasIO m => GitT i m (Either Int (Ptr CGitCloneOptions))
+initGitCloneOptions : HasIO m => GitT i m (Either Int CGitCloneOptions)
 initGitCloneOptions = do
   cloneOptions <- liftPIO $ prim_init_clone_options
   res <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
@@ -28,7 +26,7 @@ clone url localPath = do
   eOptions <- initGitCloneOptions {i}
   map join $ for eOptions $ \options => do
     res <- liftPIO $ prim_clone repo url localPath options
-    ptr <- liftPIO $ prim_get_git_repository repo
+    let ptr = prim_get_git_repository repo
     if res < 0
       then pure $ Left res
       else pure . Right $ MkGitRepository ptr
