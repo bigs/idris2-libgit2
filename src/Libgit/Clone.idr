@@ -3,13 +3,15 @@ module Libgit.Clone
 import Prelude
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Syntax
 import Control.Monad.Trans
 
 import Libgit.FFI
 import Libgit.Git
 
 export
-data GitRepository = MkGitRepository CGitRepository
+data GitRepository : (i : Type) -> Type where
+  MkGitRepository : CGitRepository -> GitRepository i
 
 initGitCloneOptions : HasIO m => GitT i m (Either Int CGitCloneOptions)
 initGitCloneOptions = do
@@ -20,7 +22,7 @@ initGitCloneOptions = do
     _ => pure $ Left res
 
 export
-clone : HasIO m => String -> String -> GitT i m (Either Int GitRepository)
+clone : HasIO m => String -> String -> GitT i m (Either Int (GitRepository i))
 clone url localPath = do
   repo <- liftPIO prim_mk_null_git_repository
   eOptions <- initGitCloneOptions {i}
@@ -34,7 +36,14 @@ clone url localPath = do
 export
 testClone : String -> String -> IO ()
 testClone url localPath = do
-  eRes <- runGitT $ clone url localPath
-  case eRes of
-    Left res => putStrLn $ "Error: " ++ show res
-    Right _ => putStrLn "Cloned repository"
+  result <- runGitT $ do
+    eRes <- clone url localPath
+    let result = case eRes of
+                   Left res => "Error: " ++ show res
+                   Right _ => "Cloned repository"
+    liftIO $ putStrLn result
+  putError result
+  where
+    putError : Either Int () -> IO ()
+    putError (Left res) = putStrLn $ "Error in shutdown: " ++ show res
+    putError (Right x) = pure x

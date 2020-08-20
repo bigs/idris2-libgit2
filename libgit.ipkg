@@ -5,6 +5,8 @@ version = "0.1"
 readme = "README.md"
 license = "GPLv2"
 
+depends = contrib
+
 sourcedir = "src"
 
 modules = Libgit
