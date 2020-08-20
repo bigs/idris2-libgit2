@@ -1,5 +1,7 @@
 module Control.Monad.Reader
 
+import Control.Monad.Trans
+
 public export
 record ReaderT (stateType : Type) (m: Type -> Type) (a: Type) where
   constructor MkReaderT
@@ -29,3 +31,7 @@ implementation Monad m => Monad (ReaderT stateType m) where
 public export
 implementation HasIO m => HasIO (ReaderT stateType m) where
   liftIO f = MkReaderT (\_ => liftIO f)
+
+public export
+implementation MonadTrans (ReaderT stateType) where
+  lift x = MkReaderT (\_ => x)

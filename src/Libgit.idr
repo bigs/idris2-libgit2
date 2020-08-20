@@ -3,4 +3,6 @@ module Libgit
 import Prelude
 import System.FFI
 
-import Libgit.Clone
+import public Libgit.Git
+import Libgit.FFI
+import public Libgit.Clone
