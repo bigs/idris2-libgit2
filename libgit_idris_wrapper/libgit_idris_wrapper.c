@@ -1,14 +1,6 @@
+#include <stdio.h>
 #include <string.h>
-
 #include <git2.h>
-
-int int_size_bytes() {
-  return (int)sizeof(int);
-}
-
-int size_t_size_bytes() {
-  return (int)sizeof(size_t);
-}
 
 int git_clone_options_version() {
   return GIT_CLONE_OPTIONS_VERSION;
@@ -28,19 +20,16 @@ git_clone_options *make_clone_options() {
   return (git_clone_options *)malloc(sizeof(git_clone_options));
 }
 
-git_strarray *get_checkout_options_paths(git_checkout_options *opts) {
-  if (opts == NULL) {
-    return NULL;
-  }
-
-  return &opts->paths;
+void *make_string(char *str) {
+  return (void *)str;
 }
 
-void *get_strarray_string(git_strarray *strs, int i) {
-  if (strs == NULL || strs->count >= i || i < 0) {
-    return NULL;
-  }
-  return strs->strings[i];
+int is_null_string(char *str) {
+  return str == NULL;
+}
+
+void *null_string() {
+  return NULL;
 }
 
 char *get_string(void *strptr) {
@@ -49,4 +38,16 @@ char *get_string(void *strptr) {
   char *copy = (char *)(malloc(bytes));
   memcpy(copy, str, bytes);
   return str;
+}
+
+void apply_clone_options(git_clone_options *opts, char *branch, int bare) {
+  opts->checkout_branch = branch;
+  opts->bare = bare;
+}
+
+char *clone_options_branch(git_clone_options *opts) {
+  if (opts->checkout_branch == NULL) {
+    printf("wat is goign on\n");
+  }
+  return get_string((void *)opts->checkout_branch);
 }

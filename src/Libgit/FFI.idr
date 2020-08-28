@@ -43,7 +43,7 @@ CGitRepositoryCreateCb payload =
   -> (path : String)
   -> (bare : Int)
   -> (payload : payload)
-  -> Int
+  -> PrimIO Int
 
 -- CGitCheckoutNotifyCb : Type -> Type
 
@@ -71,8 +71,8 @@ CGitCheckoutPerfDataCb payload =
   -> payload
   -> PrimIO ()
 
-CGitCheckoutOptions : Type -> Type -> Type -> Type
-CGitCheckoutOptions notifyPayload progressPayload perfdataPayload =
+CGitCheckoutOptions : Type
+CGitCheckoutOptions =
   Struct "git_checkout_options" [
     ("version", CUInt),
     ("checkout_strategy", CUInt),
@@ -100,14 +100,20 @@ CGitCheckoutOptions notifyPayload progressPayload perfdataPayload =
 CGitRemoteCallbacks : Type
 CGitRemoteCallbacks = AbstractStruct "git_remote_callbacks"
 
--- TODO: Define this properly
 CGitProxyOptions : Type
-CGitProxyOptions = AbstractStruct "git_proxy_options"
+CGitProxyOptions = Struct "git_proxy_options" [
+  ("version", Int),
+  ("type", Int), --enum
+  ("url", Ptr String)
+  -- ("credentials", ) callback
+  -- ("certificate_check")
+  -- ("payload", AnyPtr)
+]
 
 CGitFetchOptions : Type
 CGitFetchOptions = Struct "git_fetch_options" [
   ("version", Int),
-  ("callbacks", CGitRemoteCallbacks),
+  -- ("callbacks", CGitRemoteCallbacks),
   ("prune", Int), -- enum
   ("update_fetchhead", Int),
   ("download_tags", Int), -- enum
@@ -123,27 +129,47 @@ CGitRemoteCreateCb payload =
   -> (url : String)
   -> (payload : payload)
 
---CGitCloneOptions : Type -> Type -> Type -> Type -> Type -> Type
---CGitCloneOptions repoPayload remotePayload notifyPayload progressPayload perfdataPayload =
-export
--- CGitCloneOptions : Type
--- CGitCloneOptions =
---   Struct "git_clone_options" [
---     ("version", Int),
---     ("checkout_opts", CGitCheckoutOptions AnyPtr AnyPtr AnyPtr),
---     ("fetch_opts", CGitFetchOptions),
---     ("bare", Int),
---     ("local", Int),
---     ("checkout_branch", Ptr String)
---     -- ("repository_cb", CGitRepositoryCreateCb AnyPtr),
---     -- ("repository_cb_payload", AnyPtr),
---     -- ("remote_cb", CGitRemoteCreateCb AnyPtr),
---     -- ("remote_cb_payload", AnyPtr)
---   ]
+public export
 CGitCloneOptions : Type
-CGitCloneOptions = AbstractStruct "git_clone_options"
+CGitCloneOptions =
+  Struct "git_clone_options" [
+    ("version", Int),
+    ("checkout_opts", CGitCheckoutOptions),
+    ("fetch_opts", CGitFetchOptions),
+    ("bare", Int),
+    ("local", Int),
+    ("checkout_branch", Ptr String)
+    -- ("repository_cb", CGitRepositoryCreateCb AnyPtr),
+    -- ("repository_cb_payload", AnyPtr),
+    -- ("remote_cb", CGitRemoteCreateCb AnyPtr),
+    -- ("remote_cb_payload", AnyPtr)
+  ]
 
 -- FFI functions
+
+export
+%foreign (libgitWrapper "make_string")
+make_string : String -> Ptr String
+
+export
+%foreign (libgitWrapper "is_null_string")
+is_null_string : Ptr String -> Int
+
+export
+%foreign (libgitWrapper "get_string")
+getString : Ptr String -> String
+
+export
+%foreign (libgitWrapper "null_string")
+null_string : Ptr String
+
+export
+%foreign (libgitWrapper "clone_options_branch")
+clone_options_branch : CGitCloneOptions -> String
+
+export
+%foreign (libgitWrapper "apply_clone_options")
+prim_apply_clone_options : CGitCloneOptions -> String -> Int -> PrimIO ()
 
 export
 %foreign (libgit "git_libgit2_init")
@@ -180,3 +206,8 @@ prim_get_git_repository : (Ptr (Ptr CGitRepository)) -> CGitRepository
 export
 liftPIO : (HasIO m) => PrimIO a -> m a
 liftPIO action = liftIO $ primIO action
+
+export
+cBool : Bool -> Int
+cBool True = 1
+cBool False = 0
