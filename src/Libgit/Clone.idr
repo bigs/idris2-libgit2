@@ -12,7 +12,7 @@ import Libgit.Git
 
 export
 data GitRepository : (i : Type) -> Type where
-  MkGitRepository : CGitRepository -> GitRepository i
+  MkGitRepository : AnyPtr -> GitRepository i
 
 public export
 record CloneOpts where
@@ -24,12 +24,12 @@ export
 defaultOpts : CloneOpts
 defaultOpts = MkCloneOpts False "master"
 
-applyOpts : CloneOpts -> CGitCloneOptions -> IO ()
+applyOpts : CloneOpts -> AnyPtr -> IO ()
 applyOpts cloneOpts cCloneOpts = do
   let bare' = cBool cloneOpts.bare
   primIO $ prim_apply_clone_options cCloneOpts cloneOpts.checkoutBranch bare'
 
-initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (Either Int CGitCloneOptions)
+initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (Either Int AnyPtr)
 initGitCloneOptions opts = do
   cloneOptions <- liftPIO $ prim_init_clone_options
   0 <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
