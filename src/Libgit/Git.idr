@@ -60,8 +60,6 @@ runGitT action = do
       MkGitT readerT = action {i}
   eCtx <- liftIO $ initGitContext {i}
   for eCtx $ \ctx => do
-    (res, _) <- runReaderT readerT ctx
-    liftIO $ putStrLn "it happen yet?"
+    res <- runReaderT readerT ctx
     _ <- liftIO $ shutdownGitContext ctx
-    liftIO $ putStrLn "aint happen yet"
     pure res
