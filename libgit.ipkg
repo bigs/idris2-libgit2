@@ -5,7 +5,7 @@ version = "0.1"
 readme = "README.md"
 license = "GPLv2"
 
-depends = contrib
+depends = base, contrib
 
 sourcedir = "src"
 
@@ -13,7 +13,6 @@ modules = Libgit
         , Libgit.Clone
         , Libgit.FFI
         , Libgit.Git
-        , Control.Monad.Reader
 
 prebuild = "make -C libgit_idris_wrapper"
 postinstall = "make -C libgit_idris_wrapper install"

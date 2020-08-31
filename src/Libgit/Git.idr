@@ -24,16 +24,6 @@ shutdownGitContext : GitContext i -> IO Int
 shutdownGitContext _ = primIO prim_libgit_shutdown
 
 public export
-implementation Foldable (Either l) where
-  foldr f m (Left l) = m
-  foldr f m (Right x) = f x m
-
-public export
-implementation Traversable (Either l) where
-  traverse _ (Left x) = pure $ Left x
-  traverse f (Right x) = Right <$> f x
-
-public export
 data GitT : (i : Type) -> (m : Type -> Type) -> (a : Type) -> Type where
   MkGitT : (1 _ : ReaderT (GitContext i) m a) -> GitT i m a
 
@@ -71,5 +61,7 @@ runGitT action = do
   eCtx <- liftIO $ initGitContext {i}
   for eCtx $ \ctx => do
     (res, _) <- runReaderT readerT ctx
+    liftIO $ putStrLn "it happen yet?"
     _ <- liftIO $ shutdownGitContext ctx
+    liftIO $ putStrLn "aint happen yet"
     pure res
