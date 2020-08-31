@@ -32,12 +32,10 @@ applyOpts cloneOpts cCloneOpts = do
 initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (Either Int CGitCloneOptions)
 initGitCloneOptions opts = do
   cloneOptions <- liftPIO $ prim_init_clone_options
-  res <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
-  case res of
-    0 => do
-      liftIO $ applyOpts opts cloneOptions
-      pure $ Right cloneOptions
-    _ => pure $ Left res
+  0 <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
+    | res => pure $ Left res
+  liftIO $ applyOpts opts cloneOptions
+  pure $ Right cloneOptions
 
 export
 clone : HasIO m
@@ -49,9 +47,6 @@ clone opts url localPath = do
   repo <- liftPIO prim_mk_null_git_repository
   eOptions <- initGitCloneOptions {i} opts
   map join $ for eOptions $ \options => do
-    liftIO $ putStrLn "Trying it"
-    let branch = clone_options_branch options
-    liftIO $ putStrLn $ "Cloning " ++ branch
     res <- liftPIO $ prim_clone repo url localPath options
     let ptr = prim_get_git_repository repo
     if res < 0
