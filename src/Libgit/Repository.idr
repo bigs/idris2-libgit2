@@ -25,7 +25,7 @@ openGitRepository path = do
 ||| Executes an action with an opened GitRepository.
 |||
 ||| Returns on success the result of `action` with the GitRepository.
-||| Returns on fialure the `Int` Git error code.
+||| Returns on failure the `Int` Git error code.
 |||
 ||| @path   The path to the local Git repository.
 ||| @action The action to run with the GitRepository
@@ -34,7 +34,5 @@ withGitRepository : (HasIO m, Monad m)
                  -> (action : GitRepository i -> GitT i m (GitResult a))
                  -> GitT i m (GitResult a)
 withGitRepository path action = do
-  Right repo <- openGitRepository path
-    | Left res => gitError res
-  action repo
-
+  result <- openGitRepository path
+  join <$> traverse action result
