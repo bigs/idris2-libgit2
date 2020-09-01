@@ -13,6 +13,8 @@ modules = Libgit
         , Libgit.Clone
         , Libgit.FFI
         , Libgit.Git
+        , Libgit.Repository
+        , Libgit.Types
 
 prebuild = "make -C libgit_idris_wrapper"
 postinstall = "make -C libgit_idris_wrapper install"

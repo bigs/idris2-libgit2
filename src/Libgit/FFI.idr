@@ -77,8 +77,12 @@ export
 prim_clone : (Ptr AnyPtr) -> String -> String -> AnyPtr -> PrimIO Int
 
 export
+%foreign (libgit "git_repository_open")
+prim_git_repository_open : (Ptr AnyPtr) -> String -> PrimIO Int
+
+export
 %foreign (libgitWrapper "get_git_repository")
-prim_get_git_repository : (Ptr AnyPtr) -> AnyPtr
+get_git_repository : (Ptr AnyPtr) -> AnyPtr
 
 export
 liftPIO : (HasIO m) => PrimIO a -> m a

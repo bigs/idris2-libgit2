@@ -9,11 +9,7 @@ import System.FFI
 
 import Libgit.FFI
 import Libgit.Git
-
-||| An opaque type representing a Git repository.
-export
-data GitRepository : (i : Type) -> Type where
-  MkGitRepository : AnyPtr -> GitRepository i
+import Libgit.Types
 
 ||| A set of options that dictate how a repository should be cloned from a
 ||| remote.
@@ -66,7 +62,7 @@ clone opts url localPath = do
   eOptions <- initGitCloneOptions {i} opts
   map join $ for eOptions $ \options => do
     res <- liftPIO $ prim_clone repo url localPath options
-    let ptr = prim_get_git_repository repo
+    let ptr = get_git_repository repo
     if res < 0
       then pure $ Left res
       else pure . Right $ MkGitRepository ptr
