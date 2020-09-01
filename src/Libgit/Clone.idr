@@ -10,16 +10,26 @@ import System.FFI
 import Libgit.FFI
 import Libgit.Git
 
+||| An opaque type representing a Git repository.
 export
 data GitRepository : (i : Type) -> Type where
   MkGitRepository : AnyPtr -> GitRepository i
 
+||| A set of options that dictate how a repository should be cloned from a
+||| remote.
 public export
 record CloneOpts where
   constructor MkCloneOpts
+  ||| Make a bare Git repository. When enabled, the localPath provided to clone
+  ||| will contain the administrative files usually contained within .git and
+  ||| files won't actually be checked out.
   bare : Bool
+  ||| Which branch to checkout after cloning.
   checkoutBranch : String
 
+||| Sensible defaults for CloneOpts.
+||| + bare = False
+||| + checkoutBranch = master
 export
 defaultOpts : CloneOpts
 defaultOpts = MkCloneOpts False "master"
@@ -37,11 +47,19 @@ initGitCloneOptions opts = do
   liftIO $ applyOpts opts cloneOptions
   pure $ Right cloneOptions
 
+||| Clones a Git repository from a remote.
+|||
+||| Returns on failure an `Int` representing a Git error code.
+||| Returns on success a `GitRepository` indexed by the current Git session.
+|||
+||| @opts      A CloneOpts specifying how the repository should be cloned.
+||| @url       The URL to the Git remote to clone from.
+||| @localPath The local path to clone the repository to.
 export
 clone : HasIO m
-     => CloneOpts
-     -> String
-     -> String
+     => (opts : CloneOpts)
+     -> (url : String)
+     -> (localPath : String)
      -> GitT i m (Either Int (GitRepository i))
 clone opts url localPath = do
   repo <- liftPIO prim_mk_null_git_repository

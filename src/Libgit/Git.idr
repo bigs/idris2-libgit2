@@ -23,7 +23,9 @@ initGitContext = do
 shutdownGitContext : GitContext i -> IO Int
 shutdownGitContext _ = primIO prim_libgit_shutdown
 
-public export
+||| A Git transformer, indexed by some arbitrary `i`. The GitT transformer is
+||| simply a ReaderT whose contents are opaque to end users.
+export
 data GitT : (i : Type) -> (m : Type -> Type) -> (a : Type) -> Type where
   MkGitT : (1 _ : ReaderT (GitContext i) m a) -> GitT i m a
 
@@ -52,7 +54,13 @@ public export
 implementation HasIO m => HasIO (GitT i m) where
   liftIO action = MkGitT $ liftIO action
 
-||| Runs Git actions within an initialized `GitContext`
+||| Runs Git actions within an initialized `GitContext`.
+|||
+||| Returns on failure an `Int` representing the Git error code returend When
+||| attempting to instantiate the libgit2 library.
+||| Returns on success the result of the action.
+|||
+||| @action A GitT action to execute within an initialized Git context.
 export
 runGitT : HasIO m => (forall i. GitT i m a) -> m (Either Int a)
 runGitT action = do
