@@ -6,14 +6,31 @@ int git_clone_options_version() {
   return GIT_CLONE_OPTIONS_VERSION;
 }
 
-git_repository **make_git_repository() {
-  git_repository **ptr = (git_repository **)malloc(sizeof(git_repository *));
-  *ptr = NULL;
+typedef struct {
+  void *obj;
+  int result;
+} git_result;
+
+void *identity(void *ptr) {
   return ptr;
 }
 
-git_repository *get_git_repository(git_repository **ptr) {
-  return *ptr;
+git_result *git_clone_repository(const char *url, const char *local_path, git_clone_options *options) {
+  git_repository *repo = NULL;
+  int result = git_clone(&repo, url, local_path, options);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = repo;
+  out->result = result;
+  return out;
+}
+
+git_result *git_open_repository(const char *path) {
+  git_repository *repo = NULL;
+  int result = git_repository_open(&repo, path);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = repo;
+  out->result = result;
+  return out;
 }
 
 git_clone_options *make_clone_options() {
@@ -43,11 +60,4 @@ char *get_string(void *strptr) {
 void apply_clone_options(git_clone_options *opts, char *branch, int bare) {
   opts->checkout_branch = branch;
   opts->bare = bare;
-}
-
-char *clone_options_branch(git_clone_options *opts) {
-  if (opts->checkout_branch == NULL) {
-    printf("wat is goign on\n");
-  }
-  return get_string((void *)opts->checkout_branch);
 }

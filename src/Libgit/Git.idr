@@ -5,6 +5,7 @@ import Control.Monad.State
 import Control.Monad.Trans
 
 import Libgit.FFI
+import Libgit.Types
 
 ||| An abstract token representing the initialized libgit2 state. Its
 ||| constructor is purposefully not exported, a context can only be created
@@ -71,3 +72,11 @@ runGitT action = do
     res <- runReaderT readerT ctx
     _ <- liftIO $ shutdownGitContext ctx
     pure res
+
+export
+gitError : Applicative m => Int -> GitT i m (GitResult a)
+gitError = pure . Left
+
+export
+gitSuccess : Applicative m => (x : a) -> GitT i m (GitResult a)
+gitSuccess = pure . Right
