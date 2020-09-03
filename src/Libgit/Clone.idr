@@ -30,14 +30,15 @@ export
 defaultOpts : CloneOpts
 defaultOpts = MkCloneOpts False "master"
 
-applyOpts : CloneOpts -> AnyPtr -> IO ()
+applyOpts : CloneOpts -> GCAnyPtr -> IO ()
 applyOpts cloneOpts cCloneOpts = do
   let bare' = cBool cloneOpts.bare
   primIO $ prim_apply_clone_options cCloneOpts cloneOpts.checkoutBranch bare'
 
-initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (Either Int AnyPtr)
+initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (GitResult GCAnyPtr)
 initGitCloneOptions opts = do
-  cloneOptions <- liftPIO $ prim_init_clone_options
+  cloneOptionsUnmanaged <- liftPIO prim_init_clone_options
+  cloneOptions <- liftIO (managePtr cloneOptionsUnmanaged)
   0 <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
     | res => pure $ Left res
   liftIO $ applyOpts opts cloneOptions
@@ -52,20 +53,17 @@ initGitCloneOptions opts = do
 ||| @url       The URL to the Git remote to clone from.
 ||| @localPath The local path to clone the repository to.
 export
-clone : HasIO m
+clone : (Applicative m, HasIO m)
      => (opts : CloneOpts)
      -> (url : String)
      -> (localPath : String)
      -> GitT i m (Either Int (GitRepository i))
 clone opts url localPath = do
-  repo <- liftPIO prim_mk_null_git_repository
-  eOptions <- initGitCloneOptions {i} opts
-  map join $ for eOptions $ \options => do
-    res <- liftPIO $ prim_clone repo url localPath options
-    let ptr = get_git_repository repo
-    if res < 0
-      then pure $ Left res
-      else pure . Right $ MkGitRepository ptr
+  Right options <- initGitCloneOptions {i} opts
+    | Left res => pure (Left res)
+  cresult <- liftPIO $ prim_git_clone_repository url localPath options
+  result <- liftIO (gitResult cresult)
+  pure (MkGitRepository <$> result)
 
 export
 testClone : String -> String -> IO ()

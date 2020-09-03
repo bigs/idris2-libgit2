@@ -12,15 +12,13 @@ import Libgit.Types
 |||
 ||| @path The path to the local Git repository.
 export
-openGitRepository : (Applicative m, HasIO m)
+openGitRepository : (Monad m, HasIO m)
                  => (path : String)
                  -> GitT i m (GitResult (GitRepository i))
 openGitRepository path = do
-  repoPtr <- liftPIO prim_mk_null_git_repository
-  0 <- liftPIO $ prim_git_repository_open repoPtr path
-    | res => gitError res
-  let repo = MkGitRepository (get_git_repository repoPtr)
-  gitSuccess repo
+  cresult <- liftPIO $ prim_git_open_repository path
+  result <- liftIO (gitResult cresult)
+  pure (MkGitRepository <$> result)
 
 ||| Executes an action with an opened GitRepository.
 |||
