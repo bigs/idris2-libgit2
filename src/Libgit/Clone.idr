@@ -38,7 +38,7 @@ applyOpts cloneOpts cCloneOpts = do
 initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (GitResult GCAnyPtr)
 initGitCloneOptions opts = do
   cloneOptionsUnmanaged <- liftPIO prim_init_clone_options
-  cloneOptions <- liftIO (managePtr cloneOptionsUnmanaged)
+  cloneOptions <- liftIO (managePtr "clone options" cloneOptionsUnmanaged)
   0 <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
     | res => pure $ Left res
   liftIO $ applyOpts opts cloneOptions
@@ -62,20 +62,6 @@ clone opts url localPath = do
   Right options <- initGitCloneOptions {i} opts
     | Left res => pure (Left res)
   cresult <- liftPIO $ prim_git_clone_repository url localPath options
-  result <- liftIO (gitResult cresult)
-  pure (MkGitRepository <$> result)
-
-export
-testClone : String -> String -> IO ()
-testClone url localPath = do
-  result <- runGitT $ do
-    eRes <- clone (MkCloneOpts False "setoid") url localPath
-    let result = case eRes of
-                   Left res => "Error: " ++ show res
-                   Right _ => "Cloned repository"
-    liftIO $ putStrLn result
-  putError result
-  where
-    putError : Either Int () -> IO ()
-    putError (Left res) = putStrLn $ "Error in shutdown: " ++ show res
-    putError (Right x) = pure x
+  result <- liftIO (gitResultWithFinalizer prim_git_repository_free "git repository" cresult)
+  gResult <- traverse toGit result
+  pure (MkGitRepository <$> gResult)

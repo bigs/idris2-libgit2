@@ -61,3 +61,18 @@ void apply_clone_options(git_clone_options *opts, char *branch, int bare) {
   opts->checkout_branch = branch;
   opts->bare = bare;
 }
+
+git_result *git_oid_from_string(const char *oid_str) {
+  git_oid *oid = (git_oid *)malloc(sizeof(git_oid));
+  int result = git_oid_fromstrp(oid, oid_str);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = oid;
+  out->result = result;
+  return out;
+}
+
+char *git_oid_to_string(git_oid *oid) {
+  size_t len = GIT_OID_HEXSZ+1;
+  char *oid_str = (char *)malloc(len);
+  return git_oid_tostr(oid_str, len, oid);
+}

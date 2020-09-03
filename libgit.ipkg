@@ -11,8 +11,10 @@ sourcedir = "src"
 
 modules = Libgit
         , Libgit.Clone
+        , Libgit.Examples
         , Libgit.FFI
         , Libgit.Git
+        , Libgit.Oid
         , Libgit.Repository
         , Libgit.Types
 

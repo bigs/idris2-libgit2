@@ -3,26 +3,25 @@ module Libgit.Git
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Trans
+import System.FFI
 
 import Libgit.FFI
 import Libgit.Types
 
-||| An abstract token representing the initialized libgit2 state. Its
-||| constructor is purposefully not exported, a context can only be created
-||| via `runGitT`.
-export
-data GitContext : (i : Type) -> Type where
-  MkGitContext : GitContext i
+shutdownGitContext : AnyPtr -> IO ()
+shutdownGitContext _ = do
+  putStrLn "free gitcontext"
+  primIO prim_libgit_shutdown
+  pure ()
 
 initGitContext : forall i. IO (Either Int (GitContext i))
 initGitContext = do
   res <- primIO $ prim_libgit_init
-  if res >= 0
-    then pure $ Right $ MkGitContext
-    else pure $ Left res
-
-shutdownGitContext : GitContext i -> IO Int
-shutdownGitContext _ = primIO prim_libgit_shutdown
+  case res >= 0 of
+    True => do let ctxPtr : AnyPtr = believe_me ()
+               ctxPtrManaged <- onCollectAny ctxPtr shutdownGitContext
+               pure (Right (MkGitContext ctxPtrManaged))
+    False => pure (Left res)
 
 ||| A Git transformer, indexed by some arbitrary `i`. The GitT transformer is
 ||| simply a ReaderT whose contents are opaque to end users.
@@ -68,10 +67,17 @@ runGitT action = do
   let i = ()
       MkGitT readerT = action {i}
   eCtx <- liftIO $ initGitContext {i}
-  for eCtx $ \ctx => do
-    res <- runReaderT readerT ctx
-    _ <- liftIO $ shutdownGitContext ctx
-    pure res
+  traverse (runReaderT readerT) eCtx
+
+export
+toGit : Monad m => a -> GitT i m (Git i a)
+toGit x = do
+  ctx <- MkGitT ask
+  pure (MkGit ctx x)
+
+export
+fromGit : Git i a -> a
+fromGit (MkGit _ x) = x
 
 export
 gitError : Applicative m => Int -> GitT i m (GitResult a)

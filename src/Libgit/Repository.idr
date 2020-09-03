@@ -17,8 +17,9 @@ openGitRepository : (Monad m, HasIO m)
                  -> GitT i m (GitResult (GitRepository i))
 openGitRepository path = do
   cresult <- liftPIO $ prim_git_open_repository path
-  result <- liftIO (gitResult cresult)
-  pure (MkGitRepository <$> result)
+  result <- liftIO (gitResultWithFinalizer prim_git_repository_free "git repo from open" cresult)
+  gResult <- traverse toGit result
+  pure (MkGitRepository <$> gResult)
 
 ||| Executes an action with an opened GitRepository.
 |||
@@ -34,3 +35,8 @@ withGitRepository : (HasIO m, Monad m)
 withGitRepository path action = do
   result <- openGitRepository path
   join <$> traverse action result
+
+reset : (Monad m, HasIO m)
+     => (repo : GitRepository i)
+     -> (oid : GitOid i)
+     -> GitT i m Int
