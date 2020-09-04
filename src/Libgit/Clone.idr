@@ -36,7 +36,7 @@ applyOpts cloneOpts cCloneOpts = do
   let bare' = cBool cloneOpts.bare
   primIO $ prim_apply_clone_options cCloneOpts cloneOpts.checkoutBranch bare'
 
-withCloneOptions : CloneOpts -> (GitResult AnyPtr -> IO b) -> IO b
+withCloneOptions : CloneOpts -> (GitResult AnyPtr -> IO a) -> IO a
 withCloneOptions opts act = do
   optsPtr <- primIO prim_init_clone_options
   err <- primIO (prim_git_clone_init_options optsPtr git_clone_options_version)
@@ -45,26 +45,28 @@ withCloneOptions opts act = do
   primIO (prim_free optsPtr)
   pure res
 
-initGitCloneOptions : CloneOpts -> Managed (GitResult AnyPtr)
-initGitCloneOptions opts = managed (withCloneOptions opts)
+managedCloneOptions : CloneOpts -> Managed (GitResult AnyPtr)
+managedCloneOptions opts = managed (withCloneOptions opts)
 
-||| Clones a Git repository from a remote.
-|||
-||| Returns on failure an `Int` representing a Git error code.
-||| Returns on success a `GitRepository` indexed by the current Git session.
-|||
-||| @opts      A CloneOpts specifying how the repository should be cloned.
-||| @url       The URL to the Git remote to clone from.
-||| @localPath The local path to clone the repository to.
+withClonedRepository : (url : String)
+                    -> (localPath : String)
+                    -> (options : AnyPtr)
+                    -> (GitResult GitRepository -> IO a)
+                    -> IO a
+withClonedRepository url localPath options act = do
+  cresult <- primIO (prim_git_clone_repository url localPath options)
+  repoResult <- getGitResult cresult
+  result <- act (MkGitRepository <$> repoResult)
+  case repoResult of
+    Right ptr => pure result <* primIO (prim_git_repository_free ptr)
+    _ => pure result
+
 export
-clone : (Applicative m, HasIO m, MonadManaged m)
-     => (opts : CloneOpts)
-     -> (url : String)
-     -> (localPath : String)
-     -> GitT i m (Either Int (GitRepository i))
-clone opts url localPath = do
-  Right options <- use (initGitCloneOptions opts)
+managedClonedRepository : (opts : CloneOpts)
+                       -> (url : String)
+                       -> (localPath : String)
+                       -> Managed (GitResult GitRepository)
+managedClonedRepository opts url localPath = do
+  Right options <- managedCloneOptions opts
     | Left res => pure (Left res)
-  cresult <- liftPIO $ prim_git_clone_repository url localPath options
-  result <- liftIO (gitResultWithFinalizer prim_git_repository_free "git repository" cresult)
-  pure (MkGitRepository <$> result)
+  managed (withClonedRepository url localPath options)

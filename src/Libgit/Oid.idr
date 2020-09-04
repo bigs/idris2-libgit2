@@ -1,17 +1,22 @@
 module Libgit.Oid
 
+import Control.Monad.Managed
+
 import Libgit.FFI
 import Libgit.Git
 import Libgit.Types
 
-export
-gitOidFromString : (HasIO m, Monad m)
-                => String
-                -> GitT i m (GitResult (GitOid i))
-gitOidFromString str = do
-  result <- liftIO (gitResult "git oid" (git_oid_from_string str))
-  pure (MkGitOid <$> result)
+withOidFromString : String -> (GitResult GitOid -> IO a) -> IO a
+withOidFromString str act = do
+  let cresult = git_oid_from_string str
+  pair@(_, ptr) <- getGitResultPair cresult
+  res <- act (MkGitOid <$> pairToGitResult pair)
+  primIO (prim_free ptr)
+  pure res
+
+managedOidFromString : String -> Managed (GitResult GitOid)
+managedOidFromString str = managed (withOidFromString str)
 
 export
-gitOidToString : Applicative m => GitOid i -> GitT i m String
-gitOidToString (MkGitOid oid) = pure (git_oid_to_string oid)
+gitOidToString : Applicative m => GitOid -> String
+gitOidToString (MkGitOid oid) = git_oid_to_string oid

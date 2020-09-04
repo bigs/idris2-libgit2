@@ -1,41 +1,34 @@
 module Libgit.Repository
 
+import Control.Monad.Managed
+
+import Libgit.Clone
 import Libgit.FFI
 import Libgit.Git
 import Libgit.Types
 
-||| Open a local git repository. Libgit2 will determine whether or not the
-||| repository is bare.
-|||
-||| Returns on success a `GitRepository` indexed by the current Git session.
-||| Returns on failure an `Int` Git error code.
-|||
-||| @path The path to the local Git repository.
+public export
+data GitRepositoryOptions : Type where
+  Clone : CloneOpts -> (url : String) -> (localPath : String) -> GitRepositoryOptions
+  Open : (path : String) -> GitRepositoryOptions
+
+withOpenedRepository : (path : String)
+                    -> (action : (GitResult GitRepository -> IO a)
+                    -> IO a
+withOpenedRepository path act = do
+  cresult <- primIO (prim_git_open_repository path)
+  result <- getGitResult cresult
+  res <- act (MkGitRepository <$> result)
+  case result of
+    Left _ => pure res
+    Right ptr => pure res <* primIO (prim_git_repository_free ptr)
+
+managedOpenedRepository : (path : String)
+                       -> Managed (GitResult GitRepository)
+managedOpenedRepository path = managed (withOpenedRepository path)
+
 export
-openGitRepository : (Monad m, HasIO m)
-                 => (path : String)
-                 -> GitT i m (GitResult (GitRepository i))
-openGitRepository path = do
-  cresult <- liftPIO $ prim_git_open_repository path
-  result <- liftIO (gitResultWithFinalizer prim_git_repository_free "git repo from open" cresult)
-  pure (MkGitRepository <$> result)
-
-||| Executes an action with an opened GitRepository.
-|||
-||| Returns on success the result of `action` with the GitRepository.
-||| Returns on failure the `Int` Git error code.
-|||
-||| @path   The path to the local Git repository.
-||| @action The action to run with the GitRepository
-withGitRepository : (HasIO m, Monad m)
-                 => (path : String)
-                 -> (action : GitRepository i -> GitT i m (GitResult a))
-                 -> GitT i m (GitResult a)
-withGitRepository path action = do
-  result <- openGitRepository path
-  join <$> traverse action result
-
-reset : (Monad m, HasIO m)
-     => (repo : GitRepository i)
-     -> (oid : GitOid i)
-     -> GitT i m Int
+managedRepository : GitRepositoryOptions
+                 -> Managed (GitResult GitRepository)
+managedRepository (Clone opts url localPath) = managedClonedRepository opts url localPath
+managedRepository (Open path) = managedOpenedRepository path

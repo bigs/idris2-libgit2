@@ -23,10 +23,10 @@ toGitResult err x = case err < 0 of
 
 ||| An opaque type representing a Git repository.
 public export
-data GitRepository : (i : Type) -> Type where
-  MkGitRepository : GCAnyPtr -> GitRepository i
+data GitRepository : Type where
+  MkGitRepository : AnyPtr -> GitRepository
 
 ||| An opaque type representing a Git object id.
 public export
-data GitOid : (i : Type) -> Type where
-  MkGitOid : GCAnyPtr -> GitOid i
+data GitOid : Type where
+  MkGitOid : AnyPtr -> GitOid

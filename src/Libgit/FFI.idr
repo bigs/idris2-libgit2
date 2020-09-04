@@ -46,6 +46,32 @@ managePtr : String -> AnyPtr -> IO GCAnyPtr
 managePtr = managePtrWithFinalizer prim_free
 
 export
+getGitResult : Ptr CGitResult -> IO (GitResult AnyPtr)
+getGitResult cgrPtr = do
+  let cgr : CGitResult = derefResult cgrPtr
+      err : Int = getField cgr "result"
+      ptr : AnyPtr = getField cgr "obj"
+      gresult = case err of
+                  0 => Right ptr
+                  _ => Left err
+  primIO (prim_free (prim__forgetPtr cgrPtr))
+  pure gresult
+
+export
+getGitResultPair : Ptr CGitResult -> IO (Int, AnyPtr)
+getGitResultPair cgrPtr = do
+  let cgr : CGitResult = derefResult cgrPtr
+      err : Int = getField cgr "result"
+      ptr : AnyPtr = getField cgr "obj"
+  primIO (prim_free (prim__forgetPtr cgrPtr))
+  pure (err, ptr)
+
+export
+pairToGitResult : (Int, AnyPtr) -> GitResult AnyPtr
+pairToGitResult (0, ptr) = Right ptr
+pairToGitResult (err, _) = Left err
+
+export
 gitResultWithFinalizer : Finalizer
                       -> String
                       -> Ptr CGitResult
@@ -118,11 +144,11 @@ prim_git_clone_init_options : AnyPtr -> Int -> PrimIO Int
 
 export
 %foreign (libgitWrapper "git_clone_repository")
-prim_git_clone_repository :  String -> String -> GCAnyPtr -> PrimIO (Ptr CGitResult)
+prim_git_clone_repository :  String -> String -> AnyPtr -> PrimIO (Ptr CGitResult)
 
 export
 %foreign (libgit "git_repository_free")
-prim_git_repository_free : Finalizer
+prim_git_repository_free : AnyPtr -> PrimIO ()
 
 export
 %foreign (libgitWrapper "git_open_repository")
@@ -134,7 +160,7 @@ git_oid_from_string : String -> Ptr CGitResult
 
 export
 %foreign (libgitWrapper "git_oid_to_string")
-git_oid_to_string : GCAnyPtr -> String
+git_oid_to_string : AnyPtr -> String
 
 export
 liftPIO : (HasIO m) => PrimIO a -> m a
