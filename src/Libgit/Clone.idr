@@ -63,5 +63,4 @@ clone opts url localPath = do
     | Left res => pure (Left res)
   cresult <- liftPIO $ prim_git_clone_repository url localPath options
   result <- liftIO (gitResultWithFinalizer prim_git_repository_free "git repository" cresult)
-  gResult <- traverse toGit result
-  pure (MkGitRepository <$> gResult)
+  pure (MkGitRepository <$> result)

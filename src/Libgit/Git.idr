@@ -1,6 +1,7 @@
 module Libgit.Git
 
 import Control.Monad.Reader
+import Control.Monad.Managed
 import Control.Monad.State
 import Control.Monad.Trans
 import System.FFI
@@ -13,6 +14,16 @@ shutdownGitContext _ = do
   putStrLn "free gitcontext"
   primIO prim_libgit_shutdown
   pure ()
+
+withGit : HasIO io => io b -> io (Either Int b)
+withGit act = do
+  err <- liftIO (primIO prim_libgit_init)
+  case err < 0 of
+    True => pure (Left err)
+    False => do
+      res <- act
+      liftIO (primIO prim_libgit_shutdown)
+      pure (Right res)
 
 initGitContext : forall i. IO (Either Int (GitContext i))
 initGitContext = do
@@ -68,16 +79,6 @@ runGitT action = do
       MkGitT readerT = action {i}
   eCtx <- liftIO $ initGitContext {i}
   traverse (runReaderT readerT) eCtx
-
-export
-toGit : Monad m => a -> GitT i m (Git i a)
-toGit x = do
-  ctx <- MkGitT ask
-  pure (MkGit ctx x)
-
-export
-fromGit : Git i a -> a
-fromGit (MkGit _ x) = x
 
 export
 gitError : Applicative m => Int -> GitT i m (GitResult a)

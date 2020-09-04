@@ -15,20 +15,12 @@ public export
 GitResult : Type -> Type
 GitResult a = Either Int a
 
-public export
-data Git : (i : Type) -> (a : Type) -> Type where
-  MkGit : (ctx : GitContext i) -> a -> Git i a
-
-export
-implementation Functor (Git i) where
-  map f (MkGit ctx x) = MkGit ctx (f x)
-
 ||| An opaque type representing a Git repository.
 public export
 data GitRepository : (i : Type) -> Type where
-  MkGitRepository : Git i GCAnyPtr -> GitRepository i
+  MkGitRepository : GCAnyPtr -> GitRepository i
 
 ||| An opaque type representing a Git object id.
 public export
 data GitOid : (i : Type) -> Type where
-  MkGitOid : Git i GCAnyPtr -> GitOid i
+  MkGitOid : GCAnyPtr -> GitOid i
