@@ -61,6 +61,16 @@ withClonedRepository url localPath options act = do
     Right ptr => pure result <* primIO (prim_git_repository_free ptr)
     _ => pure result
 
+||| Accepts clone options, a Git remote URL, and a local path, and clones the
+||| Git repository at that remote to the specified local path.
+|||
+||| Returns a Managed reference to a GitRepository object which can be used to
+||| interact with the repository.
+|||
+||| @opts      A CloneOpts specifying additional details about how the
+|||            repository should be cloned.
+||| @url       A reference to the
+||| @localPath The local path to clone the repository to.
 export
 managedClonedRepository : (opts : CloneOpts)
                        -> (url : String)

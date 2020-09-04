@@ -7,9 +7,12 @@ import Libgit.FFI
 import Libgit.Git
 import Libgit.Types
 
+||| A sum type representing the different ways to instantiate a GitRepository.
 public export
 data GitRepositoryOptions : Type where
+  ||| Clone a repository given options, a URL, and a local path.
   Clone : CloneOpts -> (url : String) -> (localPath : String) -> GitRepositoryOptions
+  ||| Open an existing repository using a local path.
   Open : (path : String) -> GitRepositoryOptions
 
 withOpenedRepository : (path : String)
@@ -23,12 +26,24 @@ withOpenedRepository path act = do
     Left _ => pure res
     Right ptr => pure res <* primIO (prim_git_repository_free ptr)
 
+||| Opens an existing Git repository.
+|||
+||| Returns the Git repository pointed to by the provided path.
+|||
+||| @path Local path to the Git repository.
+export
 managedOpenedRepository : (path : String)
                        -> Managed (GitResult GitRepository)
 managedOpenedRepository path = managed (withOpenedRepository path)
 
+||| Given GitRepositoryOptions, obtain a managed reference to a GitRepository
+||| by cloning a repository or opening an existing repository.
+|||
+||| Returns a managed reference to a GitRepository.
+|||
+||| @options A GitRepositoryOptions specifying the strategy to use.
 export
-managedRepository : GitRepositoryOptions
+managedRepository : (options : GitRepositoryOptions)
                  -> Managed (GitResult GitRepository)
 managedRepository (Clone opts url localPath) = managedClonedRepository opts url localPath
 managedRepository (Open path) = managedOpenedRepository path

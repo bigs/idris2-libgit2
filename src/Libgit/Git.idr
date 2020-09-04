@@ -9,6 +9,9 @@ import System.FFI
 import Libgit.FFI
 import Libgit.Types
 
+||| Runs some action within an initialized Git context. Initializes libgit2
+||| static memory before running the action and shuts it down after running the
+||| action. All managed Git resources must be accessed from within this context.
 export
 withGit : HasIO io => io b -> io (Either Int b)
 withGit act = do

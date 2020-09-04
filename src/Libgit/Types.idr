@@ -8,6 +8,7 @@ public export
 GitResult : Type -> Type
 GitResult a = Either Int a
 
+||| Given an error code and some object, create a GitResult.
 export
 toGitResult : Int -> a -> GitResult a
 toGitResult err x = case err < 0 of

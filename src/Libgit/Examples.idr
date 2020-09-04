@@ -4,7 +4,8 @@ import Control.Monad.Managed
 
 import Libgit
 
-
+-- Clone a repository and print some information about the success of the
+-- operation.
 export
 testClone : String -> String -> String -> IO ()
 testClone url localPath branch = do
