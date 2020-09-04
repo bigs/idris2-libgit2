@@ -9,7 +9,7 @@ export
 testClone : String -> String -> String -> IO ()
 testClone url localPath branch = do
   res <- withGit $ runManaged $ do
-    eRes <- use (managedRepository (Clone (MkCloneOpts False branch) url localPath))
+    eRes <- managedRepository (Clone (MkCloneOpts False branch) url localPath)
     let result = case eRes of
                    Left res => "Error: " ++ show res
                    Right _ => "Cloned repository"
