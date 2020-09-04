@@ -1,6 +1,7 @@
 module Libgit.Clone
 
 import Prelude
+import Control.Monad.Managed
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Syntax
@@ -30,52 +31,42 @@ export
 defaultOpts : CloneOpts
 defaultOpts = MkCloneOpts False "master"
 
-applyOpts : CloneOpts -> GCAnyPtr -> IO ()
+applyOpts : CloneOpts -> AnyPtr -> IO ()
 applyOpts cloneOpts cCloneOpts = do
   let bare' = cBool cloneOpts.bare
   primIO $ prim_apply_clone_options cCloneOpts cloneOpts.checkoutBranch bare'
 
-initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (GitResult GCAnyPtr)
-initGitCloneOptions opts = do
-  cloneOptionsUnmanaged <- liftPIO prim_init_clone_options
-  cloneOptions <- liftIO (managePtr cloneOptionsUnmanaged)
-  0 <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
-    | res => pure $ Left res
-  liftIO $ applyOpts opts cloneOptions
-  pure $ Right cloneOptions
+withCloneOptions : CloneOpts -> (GitResult AnyPtr -> IO a) -> IO a
+withCloneOptions opts act = do
+  optsPtr <- primIO prim_init_clone_options
+  err <- primIO (prim_git_clone_init_options optsPtr git_clone_options_version)
+  applyOpts opts optsPtr
+  res <- act (toGitResult err optsPtr)
+  primIO (prim_free optsPtr)
+  pure res
 
-||| Clones a Git repository from a remote.
-|||
-||| Returns on failure an `Int` representing a Git error code.
-||| Returns on success a `GitRepository` indexed by the current Git session.
-|||
-||| @opts      A CloneOpts specifying how the repository should be cloned.
-||| @url       The URL to the Git remote to clone from.
-||| @localPath The local path to clone the repository to.
+managedCloneOptions : CloneOpts -> Managed (GitResult AnyPtr)
+managedCloneOptions opts = managed (withCloneOptions opts)
+
+withClonedRepository : (url : String)
+                    -> (localPath : String)
+                    -> (options : AnyPtr)
+                    -> (GitResult GitRepository -> IO a)
+                    -> IO a
+withClonedRepository url localPath options act = do
+  cresult <- primIO (prim_git_clone_repository url localPath options)
+  repoResult <- getGitResult cresult
+  result <- act (MkGitRepository <$> repoResult)
+  case repoResult of
+    Right ptr => pure result <* primIO (prim_git_repository_free ptr)
+    _ => pure result
+
 export
-clone : (Applicative m, HasIO m)
-     => (opts : CloneOpts)
-     -> (url : String)
-     -> (localPath : String)
-     -> GitT i m (Either Int (GitRepository i))
-clone opts url localPath = do
-  Right options <- initGitCloneOptions {i} opts
+managedClonedRepository : (opts : CloneOpts)
+                       -> (url : String)
+                       -> (localPath : String)
+                       -> Managed (GitResult GitRepository)
+managedClonedRepository opts url localPath = do
+  Right options <- managedCloneOptions opts
     | Left res => pure (Left res)
-  cresult <- liftPIO $ prim_git_clone_repository url localPath options
-  result <- liftIO (gitResult cresult)
-  pure (MkGitRepository <$> result)
-
-export
-testClone : String -> String -> IO ()
-testClone url localPath = do
-  result <- runGitT $ do
-    eRes <- clone (MkCloneOpts False "setoid") url localPath
-    let result = case eRes of
-                   Left res => "Error: " ++ show res
-                   Right _ => "Cloned repository"
-    liftIO $ putStrLn result
-  putError result
-  where
-    putError : Either Int () -> IO ()
-    putError (Left res) = putStrLn $ "Error in shutdown: " ++ show res
-    putError (Right x) = pure x
+  managed (withClonedRepository url localPath options)
