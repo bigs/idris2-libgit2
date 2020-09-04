@@ -9,11 +9,41 @@ import System.FFI
 import Libgit.FFI
 import Libgit.Types
 
-shutdownGitContext : AnyPtr -> IO ()
-shutdownGitContext _ = do
-  putStrLn "free gitcontext"
-  primIO prim_libgit_shutdown
-  pure ()
+||| A Git transformer, indexed by some arbitrary `i`. The GitT transformer is
+||| simply an identity monad that indexes an underlying monad stack. This index
+||| serves as a control region, limiting objects tagged with it from being used
+||| outside of this context.
+public export
+data GitT : (i : Type) -> (m : Type -> Type) -> (a : Type) -> Type where
+  MkGitT : (1 _ : m a) -> GitT i m a
+
+unGitT : GitT i m a -> m a
+unGitT (MkGitT x) = x
+
+public export
+implementation Functor f => Functor (GitT i f) where
+  map f (MkGitT x) = MkGitT (f <$> x)
+
+public export
+implementation Applicative m => Applicative (GitT i m) where
+  pure x = MkGitT (pure x)
+  MkGitT f <*> MkGitT x = MkGitT (f <*> x)
+
+public export
+implementation Monad m => Monad (GitT i m) where
+  MkGitT x >>= f = MkGitT $ x >>= unGitT . f
+
+public export
+implementation MonadTrans (GitT i) where
+  lift = MkGitT
+
+public export
+implementation HasIO m => HasIO (GitT i m) where
+  liftIO action = MkGitT (liftIO action)
+
+public export
+implementation MonadManaged m => MonadManaged (GitT i m) where
+  use x = lift (use x)
 
 withGit : HasIO io => io b -> io (Either Int b)
 withGit act = do
@@ -24,44 +54,6 @@ withGit act = do
       res <- act
       liftIO (primIO prim_libgit_shutdown)
       pure (Right res)
-
-initGitContext : forall i. IO (Either Int (GitContext i))
-initGitContext = do
-  res <- primIO $ prim_libgit_init
-  case res >= 0 of
-    True => pure (Right MkGitContext)
-    False => pure (Left res)
-
-||| A Git transformer, indexed by some arbitrary `i`. The GitT transformer is
-||| simply a ReaderT whose contents are opaque to end users.
-export
-data GitT : (i : Type) -> (m : Type -> Type) -> (a : Type) -> Type where
-  MkGitT : (1 _ : ReaderT (GitContext i) m a) -> GitT i m a
-
-unGitT : GitT i m a -> ReaderT (GitContext i) m a
-unGitT (MkGitT x) = x
-
-public export
-implementation Functor m => Functor (GitT i m) where
-  map f (MkGitT x) = MkGitT (f <$> x)
-
-public export
-implementation Applicative m => Applicative (GitT i m) where
-  pure x = MkGitT (pure x)
-
-  MkGitT f <*> MkGitT x = MkGitT (f <*> x)
-
-public export
-implementation Monad m => Monad (GitT i m) where
-  MkGitT x >>= f = MkGitT $ x >>= unGitT . f
-
-public export
-implementation MonadTrans m => MonadTrans (GitT i) where
-  lift action = MkGitT $ lift action
-
-public export
-implementation HasIO m => HasIO (GitT i m) where
-  liftIO action = MkGitT $ liftIO action
 
 ||| Runs Git actions within an initialized `GitContext`.
 |||
@@ -74,14 +66,8 @@ export
 runGitT : HasIO m => (forall i. GitT i m a) -> m (Either Int a)
 runGitT action = do
   let i = ()
-      MkGitT readerT = action {i}
-  eCtx <- liftIO $ initGitContext {i}
-  traverse (runReaderT readerT) eCtx
-
-export
-gitError : Applicative m => Int -> GitT i m (GitResult a)
-gitError = pure . Left
-
-export
-gitSuccess : Applicative m => (x : a) -> GitT i m (GitResult a)
-gitSuccess = pure . Right
+      MkGitT maction = action {i}
+  res <- liftIO (primIO prim_libgit_init)
+  case res < 0 of
+    True => pure (Left res)
+    False => maction >>= pure . Right

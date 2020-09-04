@@ -24,6 +24,7 @@ CGitResult = Struct "git_result" [
   ("result", Int)
 ]
 
+export
 %foreign "C:free,libc"
 prim_free : AnyPtr -> PrimIO ()
 
@@ -93,7 +94,7 @@ null_string : Ptr String
 
 export
 %foreign (libgitWrapper "apply_clone_options")
-prim_apply_clone_options : GCAnyPtr -> String -> Int -> PrimIO ()
+prim_apply_clone_options : AnyPtr -> String -> Int -> PrimIO ()
 
 export
 %foreign (libgit "git_libgit2_init")
@@ -113,7 +114,7 @@ git_clone_options_version : Int
 
 export
 %foreign (libgit "git_clone_init_options")
-prim_git_clone_init_options : GCAnyPtr -> Int -> PrimIO Int
+prim_git_clone_init_options : AnyPtr -> Int -> PrimIO Int
 
 export
 %foreign (libgitWrapper "git_clone_repository")

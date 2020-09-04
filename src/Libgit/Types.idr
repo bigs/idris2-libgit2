@@ -15,6 +15,12 @@ public export
 GitResult : Type -> Type
 GitResult a = Either Int a
 
+export
+toGitResult : Int -> a -> GitResult a
+toGitResult err x = case err < 0 of
+  True => Left err
+  False => Right x
+
 ||| An opaque type representing a Git repository.
 public export
 data GitRepository : (i : Type) -> Type where

@@ -1,6 +1,7 @@
 module Libgit.Clone
 
 import Prelude
+import Control.Monad.Managed
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Syntax
@@ -30,19 +31,22 @@ export
 defaultOpts : CloneOpts
 defaultOpts = MkCloneOpts False "master"
 
-applyOpts : CloneOpts -> GCAnyPtr -> IO ()
+applyOpts : CloneOpts -> AnyPtr -> IO ()
 applyOpts cloneOpts cCloneOpts = do
   let bare' = cBool cloneOpts.bare
   primIO $ prim_apply_clone_options cCloneOpts cloneOpts.checkoutBranch bare'
 
-initGitCloneOptions : HasIO m => CloneOpts -> GitT i m (GitResult GCAnyPtr)
-initGitCloneOptions opts = do
-  cloneOptionsUnmanaged <- liftPIO prim_init_clone_options
-  cloneOptions <- liftIO (managePtr "clone options" cloneOptionsUnmanaged)
-  0 <- liftPIO $ prim_git_clone_init_options cloneOptions git_clone_options_version
-    | res => pure $ Left res
-  liftIO $ applyOpts opts cloneOptions
-  pure $ Right cloneOptions
+withCloneOptions : CloneOpts -> (GitResult AnyPtr -> IO b) -> IO b
+withCloneOptions opts act = do
+  optsPtr <- primIO prim_init_clone_options
+  err <- primIO (prim_git_clone_init_options optsPtr git_clone_options_version)
+  applyOpts opts optsPtr
+  res <- act (toGitResult err optsPtr)
+  primIO (prim_free optsPtr)
+  pure res
+
+initGitCloneOptions : CloneOpts -> Managed (GitResult AnyPtr)
+initGitCloneOptions opts = managed (withCloneOptions opts)
 
 ||| Clones a Git repository from a remote.
 |||
@@ -53,13 +57,13 @@ initGitCloneOptions opts = do
 ||| @url       The URL to the Git remote to clone from.
 ||| @localPath The local path to clone the repository to.
 export
-clone : (Applicative m, HasIO m)
+clone : (Applicative m, HasIO m, MonadManaged m)
      => (opts : CloneOpts)
      -> (url : String)
      -> (localPath : String)
      -> GitT i m (Either Int (GitRepository i))
 clone opts url localPath = do
-  Right options <- initGitCloneOptions {i} opts
+  Right options <- use (initGitCloneOptions opts)
     | Left res => pure (Left res)
   cresult <- liftPIO $ prim_git_clone_repository url localPath options
   result <- liftIO (gitResultWithFinalizer prim_git_repository_free "git repository" cresult)
