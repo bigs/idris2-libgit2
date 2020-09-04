@@ -7,7 +7,7 @@ import System.FFI
 ||| via `runGitT`.
 public export
 data GitContext : (i : Type) -> Type where
-  MkGitContext : GCAnyPtr -> GitContext i
+  MkGitContext : GitContext i
 
 ||| A simple type alias for Git results which can either return a non-zero
 ||| integer error code or a result.

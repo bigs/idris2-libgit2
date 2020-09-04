@@ -29,9 +29,7 @@ initGitContext : forall i. IO (Either Int (GitContext i))
 initGitContext = do
   res <- primIO $ prim_libgit_init
   case res >= 0 of
-    True => do let ctxPtr : AnyPtr = believe_me ()
-               ctxPtrManaged <- onCollectAny ctxPtr shutdownGitContext
-               pure (Right (MkGitContext ctxPtrManaged))
+    True => pure (Right MkGitContext)
     False => pure (Left res)
 
 ||| A Git transformer, indexed by some arbitrary `i`. The GitT transformer is
