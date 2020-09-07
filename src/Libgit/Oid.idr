@@ -15,8 +15,8 @@ withOidFromString str act = do
   pure res
 
 export
-managedOidFromString : String -> Managed (GitResult GitOid)
-managedOidFromString str = managed (withOidFromString str)
+oidFromString : String -> Managed (GitResult GitOid)
+oidFromString str = managed (withOidFromString str)
 
 export
 gitOidToString : GitOid -> String

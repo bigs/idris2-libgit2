@@ -45,8 +45,8 @@ withCloneOptions opts act = do
   primIO (prim_free optsPtr)
   pure res
 
-managedCloneOptions : CloneOpts -> Managed (GitResult AnyPtr)
-managedCloneOptions opts = managed (withCloneOptions opts)
+cloneOptions : CloneOpts -> Managed (GitResult AnyPtr)
+cloneOptions opts = managed (withCloneOptions opts)
 
 withClonedRepository : (url : String)
                     -> (localPath : String)
@@ -72,11 +72,11 @@ withClonedRepository url localPath options act = do
 ||| @url       A reference to the
 ||| @localPath The local path to clone the repository to.
 export
-managedClonedRepository : (opts : CloneOpts)
-                       -> (url : String)
-                       -> (localPath : String)
-                       -> Managed (GitResult GitRepository)
-managedClonedRepository opts url localPath = do
-  Right options <- managedCloneOptions opts
+clonedRepository : (opts : CloneOpts)
+                -> (url : String)
+                -> (localPath : String)
+                -> Managed (GitResult GitRepository)
+clonedRepository opts url localPath = do
+  Right options <- cloneOptions opts
     | Left res => pure (Left res)
   managed (withClonedRepository url localPath options)

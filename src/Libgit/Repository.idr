@@ -32,9 +32,9 @@ withOpenedRepository path act = do
 |||
 ||| @path Local path to the Git repository.
 export
-managedOpenedRepository : (path : String)
-                       -> Managed (GitResult GitRepository)
-managedOpenedRepository path = managed (withOpenedRepository path)
+openedRepository : (path : String)
+                -> Managed (GitResult GitRepository)
+openedRepository path = managed (withOpenedRepository path)
 
 ||| Given GitRepositoryOptions, obtain a managed reference to a GitRepository
 ||| by cloning a repository or opening an existing repository.
@@ -43,7 +43,7 @@ managedOpenedRepository path = managed (withOpenedRepository path)
 |||
 ||| @options A GitRepositoryOptions specifying the strategy to use.
 export
-managedRepository : (options : GitRepositoryOptions)
-                 -> Managed (GitResult GitRepository)
-managedRepository (Clone opts url localPath) = managedClonedRepository opts url localPath
-managedRepository (Open path) = managedOpenedRepository path
+repository : (options : GitRepositoryOptions)
+          -> Managed (GitResult GitRepository)
+repository (Clone opts url localPath) = clonedRepository opts url localPath
+repository (Open path) = openedRepository path
