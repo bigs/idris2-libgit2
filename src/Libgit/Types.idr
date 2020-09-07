@@ -25,6 +25,41 @@ public export
 data GitOid : Type where
   MkGitOid : AnyPtr -> GitOid
 
+||| Git object types
 public export
-data GitObject : Type where
-  MkGitObject : AnyPtr -> GitObject
+data GitObjectType = GitObjectAny
+                   | GitObjectBad
+                   | GitObjectCommit
+                   | GitObjectTree
+                   | GitObjectBlob
+                   | GitObjectTag
+                   | GitObjectOfsDelta
+                   | GitObjectRefDelta
+
+export
+gitObjectTypeToInt : GitObjectType -> Int
+gitObjectTypeToInt GitObjectAny = -2
+gitObjectTypeToInt GitObjectBad = -1
+gitObjectTypeToInt GitObjectCommit = 1
+gitObjectTypeToInt GitObjectTree = 2
+gitObjectTypeToInt GitObjectBlob = 3
+gitObjectTypeToInt GitObjectTag = 4
+gitObjectTypeToInt GitObjectOfsDelta = 6
+gitObjectTypeToInt GitObjectRefDelta = 7
+
+export
+gitObjectTypeFromInt : Int -> GitObjectType
+gitObjectTypeFromInt x = case x of
+  1 => GitObjectCommit
+  2 => GitObjectTree
+  3 => GitObjectBlob
+  4 => GitObjectTag
+  6 => GitObjectOfsDelta
+  7 => GitObjectRefDelta
+  _ => if x == -2
+         then GitObjectAny
+         else GitObjectBad -- This is kind of a hack, but kind of not.
+
+public export
+data GitObject : (typ : GitObjectType) -> Type where
+  MkGitObject : AnyPtr -> GitObject typ

@@ -14,6 +14,7 @@ withOidFromString str act = do
   primIO (prim_free ptr)
   pure res
 
+export
 managedOidFromString : String -> Managed (GitResult GitOid)
 managedOidFromString str = managed (withOidFromString str)
 

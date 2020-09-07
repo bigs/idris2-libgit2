@@ -120,6 +120,10 @@ export
 git_oid_from_string : String -> Ptr CGitResult
 
 export
+%foreign (libgitWrapper "git_oid_to_string")
+git_oid_to_string : AnyPtr -> String
+
+export
 %foreign (libgitWrapper "git_lookup_object")
 git_lookup_object : AnyPtr -> AnyPtr -> Int -> Ptr CGitResult
 
@@ -128,8 +132,8 @@ export
 prim_git_object_free : AnyPtr -> PrimIO ()
 
 export
-%foreign (libgitWrapper "git_oid_to_string")
-git_oid_to_string : AnyPtr -> String
+%foreign (libgit "git_object_type")
+git_object_type : AnyPtr -> Int
 
 export
 liftPIO : (HasIO m) => PrimIO a -> m a
