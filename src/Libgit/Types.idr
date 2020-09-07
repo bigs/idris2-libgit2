@@ -24,3 +24,7 @@ data GitRepository : Type where
 public export
 data GitOid : Type where
   MkGitOid : AnyPtr -> GitOid
+
+public export
+data GitObject : Type where
+  MkGitObject : AnyPtr -> GitObject

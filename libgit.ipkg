@@ -14,6 +14,7 @@ modules = Libgit
         , Libgit.Examples
         , Libgit.FFI
         , Libgit.Git
+        , Libgit.Object
         , Libgit.Oid
         , Libgit.Repository
         , Libgit.Types

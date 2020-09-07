@@ -76,3 +76,12 @@ char *git_oid_to_string(git_oid *oid) {
   char *oid_str = (char *)malloc(len);
   return git_oid_tostr(oid_str, len, oid);
 }
+
+git_result *git_lookup_object(git_repository *repo, const git_oid *oid, git_otype type) {
+  git_object *obj = NULL;
+  int result = git_object_lookup(&obj, repo, oid, type);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = obj;
+  out->result = result;
+  return out;
+}
