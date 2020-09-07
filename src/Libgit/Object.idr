@@ -24,12 +24,29 @@ withGitObject (MkGitRepository repoPtr) (MkGitOid oidPtr) act = do
     Right ptr => pure actResult <* primIO (prim_git_object_free ptr)
     Left _ => pure actResult
 
+||| Retrieve an object of any type from a Git repository.
+|||
+||| Returns on success a dependent pair of the object's type and a managed
+||| reference to the object.
+||| Returns on failure a Git error code.
+|||
+||| @repo The GitRepository to retrieve the object from.
+||| @oid  The object ID to retrieve from the repository.
 export
-gitObject : GitRepository
-         -> GitOid
+gitObject : (repo : GitRepository)
+         -> (oid : GitOid)
          -> Managed (GitResult (typ ** GitObject typ))
 gitObject repo oid = managed (withGitObject repo oid)
 
+||| Retrieve an object of any type from a Git repository based on the object
+||| ID's string representation.
+|||
+||| Returns on success a dependent pair of the object's type and a managed
+||| reference to the object.
+||| Returns on failure a Git error code.
+|||
+||| @repo The GitRepository to retrieve the object from.
+||| @str  The string representation of an object ID.
 export
 gitObjectFromString : GitRepository
                    -> String
@@ -52,6 +69,14 @@ withTypedGitObject (MkGitRepository repoPtr) (MkGitOid oidPtr) typ act = do
     Right ptr => pure actResult <* primIO (prim_git_object_free ptr)
     Left _ => pure actResult
 
+||| Retrieve an object of a specific type from a Git repository.
+|||
+||| Returns on success a managed reference to the object.
+||| Returns on failure a Git error code.
+|||
+||| @repo The GitRepository to retrieve the object from.
+||| @oid  The object ID to retrieve from the repository.
+||| @typ  The GitObjectType of the object to retrieve.
 export
 typedGitObject : GitRepository
               -> GitOid
@@ -59,6 +84,15 @@ typedGitObject : GitRepository
               -> Managed (GitResult (GitObject typ))
 typedGitObject repo oid typ = managed (withTypedGitObject repo oid typ)
 
+||| Retrieve an object of a specific type from a Git repository based on the
+||| object ID's string representation.
+|||
+||| Returns on success a managed reference to the object.
+||| Returns on failure a Git error code.
+|||
+||| @repo The GitRepository to retrieve the object from.
+||| @str  The string representation of an object ID.
+||| @typ  The GitObjectType of the object to retrieve.
 export
 typedGitObjectFromString : GitRepository
                         -> String

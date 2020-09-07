@@ -14,10 +14,17 @@ withOidFromString str act = do
   primIO (prim_free ptr)
   pure res
 
+||| Attempt to parse a Git Object ID from a string
+|||
+||| Returns on success a managed reference to an object ID
+||| Returns on failure a Git error code
+|||
+||| @str a string representation of an object ID
 export
-oidFromString : String -> Managed (GitResult GitOid)
+oidFromString : (str : String) -> Managed (GitResult GitOid)
 oidFromString str = managed (withOidFromString str)
 
+||| Generate a hex-string representation of an object id
 export
 gitOidToString : GitOid -> String
 gitOidToString (MkGitOid oid) = git_oid_to_string oid
