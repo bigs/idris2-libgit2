@@ -36,6 +36,11 @@ data GitObjectType = GitObjectAny
                    | GitObjectOfsDelta
                    | GitObjectRefDelta
 
+public export
+data IsCommitish : GitObjectType -> Type where
+  IsCommitishCommit : IsCommitish (GitObjectCommit)
+  IsCommitishTag : IsCommitish (GitObjectTag)
+
 export
 gitObjectTypeToInt : GitObjectType -> Int
 gitObjectTypeToInt GitObjectAny = -2

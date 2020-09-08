@@ -85,3 +85,12 @@ git_result *git_lookup_object(git_repository *repo, const git_oid *oid, git_otyp
   out->result = result;
   return out;
 }
+
+git_result *git_checkout_options_init() {
+  git_checkout_options *opts = malloc(sizeof(git_checkout_options));
+  int result = git_checkout_init_options(opts, GIT_CHECKOUT_OPTIONS_VERSION);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = opts;
+  out->result = result;
+  return out;
+}

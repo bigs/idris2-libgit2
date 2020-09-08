@@ -47,3 +47,44 @@ repository : (options : GitRepositoryOptions)
           -> Managed (GitResult GitRepository)
 repository (Clone opts url localPath) = clonedRepository opts url localPath
 repository (Open path) = openedRepository path
+
+||| A sum type representing the various strategies for git reset.
+|||
+||| + GitResetSoft - Move the head to the given commit
+||| + GitResetMixed - Soft plus reset index to the commit
+||| + GitResetHard - Mixed plus changes in working tree discarded
+public export
+data GitResetType =
+    GitResetSoft
+  | GitResetMixed
+  | GitResetHard
+
+gitResetTypeToInt : GitResetType -> Int
+gitResetTypeToInt GitResetSoft = 1
+gitResetTypeToInt GitResetMixed = 2
+gitResetTypeToInt GitResetHard = 3
+
+||| Set the current head to a commit or tag.
+|||
+||| Returns a Git error code.
+|||
+||| @repo The Git repository containing the commit or tag.
+||| @obj  The Git object (must be either a commit or a tag) to set HEAD to.
+||| @rst  The type of reset to perform. An instance of GitResetType.
+export
+resetRepository : (repo : GitRepository)
+               -> {typ : GitObjectType}
+               -> {auto 0 prf : IsCommitish typ}
+               -> (obj : GitObject typ)
+               -> (rst : GitResetType)
+               -> IO Int
+resetRepository (MkGitRepository repoPtr) (MkGitObject objPtr) resetType = do
+  let rt = gitResetTypeToInt resetType
+      cgrOptions = git_checkout_init_options
+  (res, optsPtr) <- getGitResultPair cgrOptions
+  let freeOpts = primIO (prim_free optsPtr)
+  case res of
+    0 => do
+      res <- primIO (prim_git_reset repoPtr objPtr rt optsPtr)
+      pure res <* freeOpts
+    _ => pure res <* freeOpts
