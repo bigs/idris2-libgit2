@@ -11,9 +11,9 @@ import Libgit.Types
 public export
 data GitRepositoryOptions : Type where
   ||| Clone a repository given options, a URL, and a local path.
-  Clone : CloneOpts -> (url : String) -> (localPath : String) -> GitRepositoryOptions
+  GitRepositoryClone : CloneOpts -> (url : String) -> (localPath : String) -> GitRepositoryOptions
   ||| Open an existing repository using a local path.
-  Open : (path : String) -> GitRepositoryOptions
+  GitRepositoryOpen : (path : String) -> GitRepositoryOptions
 
 withOpenedRepository : (path : String)
                     -> (action : (GitResult GitRepository -> IO a)
@@ -45,8 +45,8 @@ openedRepository path = managed (withOpenedRepository path)
 export
 repository : (options : GitRepositoryOptions)
           -> Managed (GitResult GitRepository)
-repository (Clone opts url localPath) = clonedRepository opts url localPath
-repository (Open path) = openedRepository path
+repository (GitRepositoryClone opts url localPath) = clonedRepository opts url localPath
+repository (GitRepositoryOpen path) = openedRepository path
 
 ||| A sum type representing the various strategies for git reset.
 |||
