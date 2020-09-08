@@ -29,13 +29,19 @@ resetRepo path rev = do
     Right (objTyp ** obj) <- revParse repo rev
       | Left err => putStrLn ("Error opening repo: " ++ show err)
     case objTyp of
-      GitObjectCommit => do
-        liftIO (resetRepository repo obj GitResetHard)
-        liftIO (putStrLn "Successfully reset repo")
-      GitObjectTag => do
-        liftIO (resetRepository repo obj GitResetHard)
-        liftIO (putStrLn "Successfully reset repo")
+      GitObjectCommit => liftIO resetRepo
+      GitObjectTag => liftIO resetRepo
       _ => liftIO (putStrLn "Wrong object type")
-    putStrLn "Successfully reset repo"
   pure ()
+  where
+    resetRepo : {auto repo : GitRepository}
+             -> {auto typ : GitObjectType}
+             -> {auto obj : GitObject typ}
+             -> {auto 0 prf : IsCommitish typ}
+             -> IO ()
+    resetRepo {repo} {obj} = do
+      0 <- liftIO (resetRepository repo obj GitResetHard)
+        | err => putStrLn ("Error resetting repo: " ++ show err)
+      putStrLn "Successfully reset repo"
+
 
