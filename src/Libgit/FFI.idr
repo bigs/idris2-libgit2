@@ -136,6 +136,10 @@ export
 git_lookup_object : AnyPtr -> AnyPtr -> Int -> Ptr CGitResult
 
 export
+%foreign (libgitWrapper "git_single_revparse")
+prim_git_single_revparse : AnyPtr -> String -> PrimIO (Ptr CGitResult)
+
+export
 %foreign (libgit "git_object_free")
 prim_git_object_free : AnyPtr -> PrimIO ()
 

@@ -38,8 +38,8 @@ data GitObjectType = GitObjectAny
 
 public export
 data IsCommitish : GitObjectType -> Type where
-  IsCommitishCommit : IsCommitish (GitObjectCommit)
-  IsCommitishTag : IsCommitish (GitObjectTag)
+  IsCommitishCommit : IsCommitish GitObjectCommit
+  IsCommitishTag : IsCommitish GitObjectTag
 
 export
 gitObjectTypeToInt : GitObjectType -> Int

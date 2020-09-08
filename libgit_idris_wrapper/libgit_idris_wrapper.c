@@ -94,3 +94,12 @@ git_result *git_checkout_options_init() {
   out->result = result;
   return out;
 }
+
+git_result *git_single_revparse(git_repository *repo, const char *spec) {
+  git_object *obj = NULL;
+  int result = git_revparse_single(&obj, repo, spec);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = obj;
+  out->result = result;
+  return out;
+}

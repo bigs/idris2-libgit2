@@ -56,6 +56,33 @@ gitObjectFromString repo str = do
     | Left err => pure (Left err)
   gitObject repo oid
 
+withParsedRev : (repo : GitRepository)
+             -> (rev : String)
+             -> (GitResult (typ ** GitObject typ) -> IO a)
+             -> IO a
+withParsedRev (MkGitRepository repo) rev act = do
+  cgr <- primIO (prim_git_single_revparse repo rev)
+  (err, ptr) <- getGitResultPair cgr
+  let revResult = enrichGitObject <$> toGitResult err ptr
+  result <- act revResult
+  primIO (prim_git_object_free ptr)
+  pure result
+
+||| Parse a formatted revision string into a Git object.
+|||
+||| Returns on success a managed reference to the Git object.
+||| Returns on failure a Git error code.
+|||
+||| @repo The Git repository to perform the lookup in.
+||| @rev  The string, formatted per the git revision spec
+|||       http://git-scm.com/docs/git-rev-parse.html#_specifying_revisions),
+|||       to parse into an object.
+export
+revParse : (repo : GitRepository)
+        -> (rev : String)
+        -> Managed (GitResult (typ ** GitObject typ))
+revParse repo rev = managed (withParsedRev repo rev)
+
 withTypedGitObject : GitRepository
                   -> GitOid
                   -> (typ : GitObjectType)
