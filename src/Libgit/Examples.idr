@@ -27,7 +27,7 @@ resetRepo path rev = do
     Right repo <- repository (GitRepositoryOpen path)
       | Left err => putStrLn ("Error opening repo: " ++ show err)
     Right (objTyp ** obj) <- revParse repo rev
-      | Left err => putStrLn ("Error opening repo: " ++ show err)
+      | Left err => putStrLn ("Error parsing revision: " ++ show err)
     case objTyp of
       GitObjectCommit => liftIO resetRepo
       GitObjectTag => liftIO resetRepo
