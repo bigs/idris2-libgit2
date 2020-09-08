@@ -116,8 +116,8 @@ export
 prim_git_open_repository : String -> PrimIO (Ptr CGitResult)
 
 export
-%foreign (libgitWrapper "git_checkout_init_options")
-git_checkout_init_options : Ptr CGitResult
+%foreign (libgitWrapper "git_checkout_options_init")
+git_checkout_options_init : Ptr CGitResult
 
 export
 %foreign (libgit "git_reset")

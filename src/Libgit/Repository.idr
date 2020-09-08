@@ -80,11 +80,11 @@ resetRepository : (repo : GitRepository)
                -> IO Int
 resetRepository (MkGitRepository repoPtr) (MkGitObject objPtr) resetType = do
   let rt = gitResetTypeToInt resetType
-      cgrOptions = git_checkout_init_options
-  (res, optsPtr) <- getGitResultPair cgrOptions
+      cgrOptions = git_checkout_options_init
+  (err, optsPtr) <- getGitResultPair cgrOptions
   let freeOpts = primIO (prim_free optsPtr)
-  case res of
+  case err of
     0 => do
       res <- primIO (prim_git_reset repoPtr objPtr rt optsPtr)
       pure res <* freeOpts
-    _ => pure res <* freeOpts
+    _ => pure err <* freeOpts
