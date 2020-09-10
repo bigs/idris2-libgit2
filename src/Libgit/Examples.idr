@@ -3,6 +3,7 @@ module Libgit.Examples
 import Control.Monad.Managed
 
 import Libgit
+import Libgit.FFI
 
 -- Clone a repository and print some information about the success of the
 -- operation.
@@ -50,10 +51,17 @@ fetchRemote : (path : String) -> (remote : String) -> IO ()
 fetchRemote path rev = do
   withGit $ runManaged $ do
     Right repo <- repository (GitRepositoryOpen path)
-      | Left err => putStrLn ("Error opening repo: " ++ show err)
+      | Left err => putError ("Error opening repo: " ++ show err)
     Right remote <- remote repo "origin"
-      | Left err => putStrLn ("Error looking up remote: " ++ show err)
+      | Left err => putError ("Error looking up remote: " ++ show err)
     0 <- liftIO (remoteFetch' remote "Fetched from Idris")
-      | err => putStrLn ("Error fetching remote: " ++ show err)
+      | err => putError ("Error fetching remote: " ++ show err)
     putStrLn "Fetch successful."
   pure ()
+  where
+    putError : HasIO io => String -> io ()
+    putError msg = liftIO $ do
+      putStrLn msg
+      case lastError of
+        Just (msg, _) => putStrLn msg
+        Nothing => putStrLn "No git error present"

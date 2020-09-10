@@ -41,8 +41,8 @@ void *make_string(char *str) {
   return (void *)str;
 }
 
-int is_null_string(char *str) {
-  return str == NULL;
+int is_null(void *ptr) {
+  return ptr == NULL;
 }
 
 void *null_string() {
