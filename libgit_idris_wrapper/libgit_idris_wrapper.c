@@ -95,6 +95,15 @@ git_result *git_checkout_options_init() {
   return out;
 }
 
+git_result *git_fetch_options_init() {
+  git_fetch_options *opts = malloc(sizeof(git_fetch_options));
+  int result = git_fetch_init_options(opts, GIT_FETCH_OPTIONS_VERSION);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = opts;
+  out->result = result;
+  return out;
+}
+
 git_result *git_single_revparse(git_repository *repo, const char *spec) {
   git_object *obj = NULL;
   int result = git_revparse_single(&obj, repo, spec);

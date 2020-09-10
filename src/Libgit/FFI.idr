@@ -76,6 +76,10 @@ export
 null_string : Ptr String
 
 export
+%foreign (libgitWrapper "null_string")
+null_ptr : AnyPtr
+
+export
 %foreign (libgit "git_libgit2_init")
 prim_libgit_init : PrimIO Int
 
@@ -116,6 +120,10 @@ export
 git_checkout_options_init : Ptr CGitResult
 
 export
+%foreign (libgitWrapper "git_fetch_options_init")
+git_fetch_options_init : Ptr CGitResult
+
+export
 %foreign (libgit "git_reset")
 prim_git_reset : AnyPtr -> AnyPtr -> Int -> AnyPtr -> PrimIO Int
 
@@ -150,6 +158,10 @@ git_lookup_remote : AnyPtr -> String -> Ptr CGitResult
 export
 %foreign (libgit "git_remote_free")
 prim_git_remote_free : AnyPtr -> PrimIO ()
+
+export
+%foreign (libgit "git_remote_fetch")
+prim_git_remote_fetch : AnyPtr -> AnyPtr -> AnyPtr -> Ptr String -> PrimIO Int
 
 export
 liftPIO : (HasIO m) => PrimIO a -> m a
