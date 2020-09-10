@@ -44,4 +44,16 @@ resetRepo path rev = do
         | err => putStrLn ("Error resetting repo: " ++ show err)
       putStrLn "Successfully reset repo"
 
-
+-- Open a repository and fetch a remote
+export
+fetchRemote : (path : String) -> (remote : String) -> IO ()
+fetchRemote path rev = do
+  withGit $ runManaged $ do
+    Right repo <- repository (GitRepositoryOpen path)
+      | Left err => putStrLn ("Error opening repo: " ++ show err)
+    Right remote <- remote repo "origin"
+      | Left err => putStrLn ("Error looking up remote: " ++ show err)
+    0 <- liftIO (remoteFetch' remote "Fetched from Idris")
+      | err => putStrLn ("Error fetching remote: " ++ show err)
+    putStrLn "Fetch successful."
+  pure ()

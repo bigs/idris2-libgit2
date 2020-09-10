@@ -31,6 +31,7 @@ remote repo name = managed (withRemote repo name)
 ||| Returns a Git error code.
 |||
 ||| @remote The Git remote to fetch.
+export
 remoteFetch : (remote : GitRemote) -> IO Int
 remoteFetch (MkGitRemote remote) = do
   let cgr = git_fetch_options_init
@@ -45,6 +46,7 @@ remoteFetch (MkGitRemote remote) = do
 |||
 ||| @remote The Git remote to fetch.
 ||| @reflogMessage The message to write in the reflog for this fetch.
+export
 remoteFetch' : (remote : GitRemote)
             -> (reflogMessage : String)
             -> IO Int

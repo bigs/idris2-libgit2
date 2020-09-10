@@ -6,6 +6,7 @@ import System.FFI
 import public Libgit.Clone
 import Libgit.FFI
 import public Libgit.Git
+import public Libgit.Remote
 import public Libgit.Repository
 import public Libgit.Object
 import public Libgit.Oid
