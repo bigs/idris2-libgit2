@@ -1,9 +1,5 @@
 module Libgit.Git
 
-import Control.Monad.Reader
-import Control.Monad.Managed
-import Control.Monad.State
-import Control.Monad.Trans
 import System.FFI
 
 import Libgit.FFI
@@ -22,3 +18,19 @@ withGit act = do
       res <- act
       liftIO (primIO prim_libgit_shutdown)
       pure (Right res)
+
+||| Get the last Git error, if present.
+|||
+||| Returns a tuple of a git error message and an error class code if a Git
+||| error is present.
+export
+lastError : Maybe (String, Int)
+lastError =
+  let ptr = git_error_last in
+    case is_null_ptr (prim__forgetPtr ptr) of
+      1 => Nothing
+      _ => let giterr = derefGitError ptr
+               message = getField giterr "message"
+               klass = getField giterr "klass"
+               messageStr = getString message in
+             Just (messageStr, klass)

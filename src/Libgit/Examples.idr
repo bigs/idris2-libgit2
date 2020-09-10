@@ -3,7 +3,6 @@ module Libgit.Examples
 import Control.Monad.Managed
 
 import Libgit
-import Libgit.FFI
 
 -- Clone a repository and print some information about the success of the
 -- operation.

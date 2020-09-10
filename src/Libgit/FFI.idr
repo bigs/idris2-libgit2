@@ -48,12 +48,14 @@ getGitResult cgrPtr = do
     0 => pure (Right ptr)
     _ => pure (Left err)
 
+public export
 CGitError : Type
 CGitError = Struct "git_error" [
   ("message", Ptr String),
   ("klass", Int)
 ]
 
+export
 %foreign (libgitWrapper "identity")
 derefGitError : Ptr CGitError -> CGitError
 
@@ -179,18 +181,6 @@ prim_git_remote_fetch : AnyPtr -> AnyPtr -> AnyPtr -> Ptr String -> PrimIO Int
 export
 %foreign (libgit "giterr_last")
 git_error_last : Ptr CGitError
-
-export
-lastError : Maybe (String, Int)
-lastError =
-  let ptr = git_error_last in
-    case is_null_ptr (prim__forgetPtr ptr) of
-      1 => Nothing
-      _ => let giterr = derefGitError ptr
-               message = getField giterr "message"
-               klass = getField giterr "klass"
-               messageStr = getString message in
-             Just (messageStr, klass)
 
 export
 liftPIO : (HasIO m) => PrimIO a -> m a
