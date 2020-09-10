@@ -144,6 +144,14 @@ export
 git_object_type : AnyPtr -> Int
 
 export
+%foreign (libgitWrapper "git_lookup_remote")
+git_lookup_remote : AnyPtr -> String -> Ptr CGitResult
+
+export
+%foreign (libgit "git_remote_free")
+prim_git_remote_free : AnyPtr -> PrimIO ()
+
+export
 liftPIO : (HasIO m) => PrimIO a -> m a
 liftPIO action = liftIO (primIO action)
 

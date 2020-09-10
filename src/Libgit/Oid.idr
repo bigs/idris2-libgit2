@@ -3,7 +3,6 @@ module Libgit.Oid
 import Control.Monad.Managed
 
 import Libgit.FFI
-import Libgit.Git
 import Libgit.Types
 
 withOidFromString : String -> (GitResult GitOid -> IO a) -> IO a

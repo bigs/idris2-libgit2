@@ -68,3 +68,7 @@ gitObjectTypeFromInt x = case x of
 public export
 data GitObject : (typ : GitObjectType) -> Type where
   MkGitObject : AnyPtr -> GitObject typ
+
+public export
+data GitRemote : Type where
+  MkGitRemote : AnyPtr -> GitRemote

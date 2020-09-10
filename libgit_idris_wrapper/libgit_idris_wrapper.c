@@ -103,3 +103,12 @@ git_result *git_single_revparse(git_repository *repo, const char *spec) {
   out->result = result;
   return out;
 }
+
+git_result *git_lookup_remote(git_repository *repo, const char *name) {
+  git_remote *remote = NULL;
+  int result = git_remote_lookup(&remote, repo, name);
+  git_result *out = malloc(sizeof(git_result));
+  out->obj = remote;
+  out->result = result;
+  return out;
+}
