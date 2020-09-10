@@ -1,5 +1,5 @@
-# libgit-idris
-libgit bindings for Idris 2
+# idris2-libgit2
+libgit2 bindings for Idris 2
 
 ## Dependencies
 
